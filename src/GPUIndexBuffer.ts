@@ -60,11 +60,14 @@ export class GPUIndexBuffer {
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 
 		// Cast indices to correct type.
+		let typedIndices: Uint8Array | Uint16Array | Uint32Array;
 		if (!isTypedArray(indices)) {
-			indices = new Uint32Array(indices);
+			typedIndices = new Uint32Array(indices);
+		} else {
+			typedIndices = indices as Uint8Array | Uint16Array | Uint32Array;
 		}
 		let glType;
-		switch(indices.constructor) {
+		switch(typedIndices.constructor) {
 			case Uint8Array:
 				glType = gl.UNSIGNED_BYTE;
 				break;
@@ -77,7 +80,7 @@ export class GPUIndexBuffer {
 					if (!ext) {
 						// Fall back to using gl.UNSIGNED_SHORT.
 						glType = gl.UNSIGNED_SHORT;
-						indices = Uint16Array.from(indices);
+						typedIndices = Uint16Array.from(typedIndices);
 						break;
 					}
 				}
@@ -87,7 +90,7 @@ export class GPUIndexBuffer {
 		// Fill the current element array buffer with data.
 		gl.bufferData(
 			gl.ELEMENT_ARRAY_BUFFER,
-			indices,
+			typedIndices,
 			gl.STATIC_DRAW
 		);
 

@@ -2104,7 +2104,14 @@ export class GPUComposer {
 
 		const { canvas } = this;
 		const filename = params.filename || 'output';
-		const callback = params.callback || saveAs; // Default to saving the image with file-saver.
+		const callback = params.callback || ((blob: Blob, filename: string) => {
+			// Default to saving the image with file-saver if available
+			if (typeof (globalThis as any).saveAs === 'function') {
+				(globalThis as any).saveAs(blob, filename);
+			} else {
+				console.warn('saveAs function not available. Please provide a callback or include file-saver library.');
+			}
+		});
 		// TODO: need to adjust the canvas size to get the correct px ratio from toBlob().
 		// const ratio = window.devicePixelRatio || 1;
 		canvas.toBlob((blob) => {
@@ -2214,7 +2221,7 @@ export class GPUComposer {
 		delete this._enabledVertexAttributes;
 
 		// Delete vertex shaders.
-		Object.values(this._vertexShaders).forEach(({ compiledShaders })=> {
+		(Object as any).values(this._vertexShaders).forEach(({ compiledShaders }: any)=> {
 			Object.keys(compiledShaders).forEach(key => {
 				gl.deleteShader(compiledShaders[key]);
 				delete compiledShaders[key];
@@ -2224,7 +2231,7 @@ export class GPUComposer {
 		delete this._vertexShaders;
 		
 		// Delete fragment shaders.
-		Object.values(this._copyPrograms).forEach(program => {
+		(Object as any).values(this._copyPrograms).forEach((program: any) => {
 			program.dispose();
 		});
 		Object.keys(this._copyPrograms).forEach(key => {
@@ -2234,7 +2241,7 @@ export class GPUComposer {
 		// @ts-ignore;
 		delete this._copyPrograms;
 
-		Object.values(this._setValuePrograms).forEach(program => {
+		(Object as any).values(this._setValuePrograms).forEach((program: any) => {
 			program.dispose();
 		});
 		Object.keys(this._setValuePrograms).forEach(key => {
