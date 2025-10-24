@@ -70,6 +70,7 @@ import { checkRequiredKeys, checkValidKeys, isValidClearValue } from './checks';
 import { bindFrameBuffer } from './framebuffers';
 import { getExtension, OES_VERTEX_ARRAY_OBJECT } from './extensions';
 import { GPUIndexBuffer } from './GPUIndexBuffer';
+import { AutoProfileOptions } from './performance/autoProfile';
 
 export class GPUComposer {
 	/**
@@ -210,6 +211,11 @@ export class GPUComposer {
 	private _numTicks = 0;
 
 	/**
+	 * Auto-performance profiling options for dynamic quality adjustment.
+	 */
+	private _autoProfileOptions?: AutoProfileOptions;
+
+	/**
 	 * Create a GPUComposer from an existing THREE.WebGLRenderer that shares a single WebGL context.
 	 * @param renderer - Threejs WebGLRenderer.
 	 * @param params - GPUComposer parameters.
@@ -230,6 +236,7 @@ export class GPUComposer {
 			clearValue?: number | number[],
 			verboseLogging?: boolean,
 			errorCallback?: ErrorCallback,
+			autoPerformanceProfile?: AutoProfileOptions,
 		},
 	) {
 		const composer = new GPUComposer(
@@ -277,10 +284,11 @@ export class GPUComposer {
 			// Optionally pass in an error callback in case we want to handle errors related to webgl support.
 			// e.g. throw up a modal telling user this will not work on their device.
 			errorCallback?: ErrorCallback,
+			autoPerformanceProfile?: AutoProfileOptions,
 		},
 	) {
 		// Check params.
-		const validKeys = ['canvas', 'context', 'contextID', 'contextAttributes', 'glslVersion', 'intPrecision', 'floatPrecision', 'clearValue', 'verboseLogging', 'errorCallback'];
+		const validKeys = ['canvas', 'context', 'contextID', 'contextAttributes', 'glslVersion', 'intPrecision', 'floatPrecision', 'clearValue', 'verboseLogging', 'errorCallback', 'autoPerformanceProfile'];
 		const requiredKeys = ['canvas'];
 		const keys = Object.keys(params);
 		checkValidKeys(keys, validKeys, 'GPUComposer(params)');
@@ -363,6 +371,11 @@ export class GPUComposer {
 
 		if (params.clearValue !== undefined) {
 			this.clearValue = params.clearValue;
+		}
+
+		// Auto-performance profile setup.
+		if (params.autoPerformanceProfile !== undefined) {
+			this._autoProfileOptions = params.autoPerformanceProfile;
 		}
 
 		// Canvas setup.
@@ -595,6 +608,11 @@ export class GPUComposer {
 		// Save dimensions.
 		this._width = width;
 		this._height = height;
+
+		// Performance monitoring hook for auto-profile
+		if (this._autoProfileOptions?.onCanvasResize) {
+			this._autoProfileOptions.onCanvasResize(width, height);
+		}
 	};
 
 	/**
@@ -2123,6 +2141,18 @@ export class GPUComposer {
 		const factor = 0.9;
 		const fps =  Number.parseFloat((factor * _lastTickFPS + (1 - factor) * currentFPS).toFixed(1));
 		this._lastTickFPS = fps;
+
+		// Auto-performance profiling hook
+		if (this._autoProfileOptions?.onPerformanceUpdate) {
+			this._autoProfileOptions.onPerformanceUpdate({
+				fps,
+				numTicks: this._numTicks,
+				timestamp: currentTime,
+				canvasWidth: this._width,
+				canvasHeight: this._height,
+			});
+		}
+
 		return {
 			fps,
 			numTicks: this._numTicks,
