@@ -8787,7 +8787,15 @@
             checkValidKeys(keys, validKeys, 'GPUComposer.savePNG(params)');
             var canvas = this.canvas;
             var filename = params.filename || 'output';
-            var callback = params.callback || saveAs; // Default to saving the image with file-saver.
+            var callback = params.callback || (function (blob, filename) {
+                // Default to saving the image with file-saver if available
+                if (typeof globalThis.saveAs === 'function') {
+                    globalThis.saveAs(blob, filename);
+                }
+                else {
+                    console.warn('saveAs function not available. Please provide a callback or include file-saver library.');
+                }
+            });
             // TODO: need to adjust the canvas size to get the correct px ratio from toBlob().
             // const ratio = window.devicePixelRatio || 1;
             canvas.toBlob(function (blob) {
@@ -8995,11 +9003,15 @@
             // Make index buffer the current ELEMENT_ARRAY_BUFFER.
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
             // Cast indices to correct type.
+            var typedIndices;
             if (!isTypedArray(indices)) {
-                indices = new Uint32Array(indices);
+                typedIndices = new Uint32Array(indices);
+            }
+            else {
+                typedIndices = indices;
             }
             var glType;
-            switch (indices.constructor) {
+            switch (typedIndices.constructor) {
                 case Uint8Array:
                     glType = gl.UNSIGNED_BYTE;
                     break;
@@ -9012,7 +9024,7 @@
                         if (!ext) {
                             // Fall back to using gl.UNSIGNED_SHORT.
                             glType = gl.UNSIGNED_SHORT;
-                            indices = Uint16Array.from(indices);
+                            typedIndices = Uint16Array.from(typedIndices);
                             break;
                         }
                     }
@@ -9020,7 +9032,7 @@
                     break;
             }
             // Fill the current element array buffer with data.
-            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, typedIndices, gl.STATIC_DRAW);
             this.buffer = indexBuffer;
             this.glType = glType;
             this.count = indices.length;
