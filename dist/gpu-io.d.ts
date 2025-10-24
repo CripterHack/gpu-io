@@ -129,6 +129,148 @@ declare class GPUIndexBuffer {
     dispose(): void;
 }
 
+/**
+ * Auto-performance profiling module for GPU-IO
+ * Ported from fluid-background.js with TypeScript types and dependency injection
+ */
+interface QualityPreset {
+    readonly id: QualityPresetId;
+    readonly particleDensity: number;
+    readonly maxParticles: number;
+    readonly particleLifetime: number;
+    readonly numJacobiSteps: number;
+    readonly numRenderSteps: number;
+    readonly velocityScaleFactor: number;
+    readonly maxVelocity: number;
+    readonly trailLength: number;
+    readonly touchForceScale: number;
+    readonly frameBudget: number;
+}
+type QualityPresetId = 'alto' | 'medio' | 'bajo' | 'minimo';
+declare const QUALITY_PRESET_MAPPING: {
+    readonly high: "alto";
+    readonly medium: "medio";
+    readonly low: "bajo";
+    readonly minimal: "minimo";
+};
+declare const QUALITY_PRESETS: Record<QualityPresetId, QualityPreset>;
+declare const QUALITY_SEQUENCE: QualityPresetId[];
+interface AutoProfileOptions {
+    /** Override automatic detection with specific profile */
+    profileId?: QualityPresetId;
+    /** Callback when performance downgrade is requested */
+    onRequestDowngrade?: (targetProfileId: QualityPresetId) => void;
+    /** Custom device capabilities for testing */
+    deviceCapabilities?: DeviceCapabilities;
+    /** Callback for performance metrics updates */
+    onPerformanceUpdate?: (metrics: {
+        fps: number;
+        numTicks: number;
+        timestamp: number;
+        canvasWidth: number;
+        canvasHeight: number;
+    }) => void;
+    /** Callback for canvas resize events */
+    onCanvasResize?: (width: number, height: number) => void;
+}
+interface DeviceCapabilities {
+    supportsWebGL2: boolean;
+    deviceMemory?: number;
+    hardwareConcurrency?: number;
+    devicePixelRatio?: number;
+    screenWidth?: number;
+    screenHeight?: number;
+    prefersReducedMotion?: boolean;
+    saveData?: boolean;
+}
+interface BrowserEnvironment {
+    window?: {
+        matchMedia?: (query: string) => MediaQueryList;
+        devicePixelRatio?: number;
+        innerWidth?: number;
+        innerHeight?: number;
+    };
+    navigator?: {
+        deviceMemory?: number;
+        hardwareConcurrency?: number;
+        connection?: {
+            saveData?: boolean;
+            addEventListener?: (event: string, handler: () => void) => void;
+            removeEventListener?: (event: string, handler: () => void) => void;
+        };
+        mozConnection?: {
+            saveData?: boolean;
+        };
+        webkitConnection?: {
+            saveData?: boolean;
+        };
+    } & {
+        [key: string]: any;
+    };
+}
+/**
+ * Get the next lower quality preset ID in the sequence
+ */
+declare function getNextQualityId(id: QualityPresetId): QualityPresetId | null;
+/**
+ * Check if user prefers reduced motion (SSR-safe)
+ */
+declare function prefersReducedMotion(env?: BrowserEnvironment): boolean;
+/**
+ * Detect optimal quality profile based on device capabilities
+ */
+declare function detectQualityProfile(capabilities: DeviceCapabilities, env?: BrowserEnvironment): QualityPresetId;
+/**
+ * Create fluid background with auto-performance profiling
+ * This is a simplified version focused on the profiling logic
+ */
+declare function createFluidBackground(gpuioAPI: any, // Will be properly typed when integrated with GPUComposer
+options?: AutoProfileOptions): {
+    dispose: () => void;
+    currentProfile: QualityPresetId;
+};
+/**
+ * Utility to translate quality preset properties to composer configuration
+ */
+declare function translatePresetToConfig(preset: QualityPreset): {
+    particleCount: number;
+    jacobiIterations: number;
+    renderPasses: number;
+    velocityScale: number;
+    trailFadeRate: number;
+};
+
+type autoProfile_d_AutoProfileOptions = AutoProfileOptions;
+type autoProfile_d_BrowserEnvironment = BrowserEnvironment;
+type autoProfile_d_DeviceCapabilities = DeviceCapabilities;
+declare const autoProfile_d_QUALITY_PRESETS: typeof QUALITY_PRESETS;
+declare const autoProfile_d_QUALITY_PRESET_MAPPING: typeof QUALITY_PRESET_MAPPING;
+declare const autoProfile_d_QUALITY_SEQUENCE: typeof QUALITY_SEQUENCE;
+type autoProfile_d_QualityPreset = QualityPreset;
+type autoProfile_d_QualityPresetId = QualityPresetId;
+declare const autoProfile_d_createFluidBackground: typeof createFluidBackground;
+declare const autoProfile_d_detectQualityProfile: typeof detectQualityProfile;
+declare const autoProfile_d_getNextQualityId: typeof getNextQualityId;
+declare const autoProfile_d_prefersReducedMotion: typeof prefersReducedMotion;
+declare const autoProfile_d_translatePresetToConfig: typeof translatePresetToConfig;
+declare namespace autoProfile_d {
+  export {
+    autoProfile_d_AutoProfileOptions as AutoProfileOptions,
+    autoProfile_d_BrowserEnvironment as BrowserEnvironment,
+    autoProfile_d_DeviceCapabilities as DeviceCapabilities,
+    autoProfile_d_QUALITY_PRESETS as QUALITY_PRESETS,
+    autoProfile_d_QUALITY_PRESET_MAPPING as QUALITY_PRESET_MAPPING,
+    autoProfile_d_QUALITY_SEQUENCE as QUALITY_SEQUENCE,
+    autoProfile_d_QualityPreset as QualityPreset,
+    autoProfile_d_QualityPresetId as QualityPresetId,
+    autoProfile_d_createFluidBackground as createFluidBackground,
+    autoProfile_d_detectQualityProfile as detectQualityProfile,
+    autoProfile_d_getNextQualityId as getNextQualityId,
+    autoProfile_d_prefersReducedMotion as prefersReducedMotion,
+    autoProfile_d_translatePresetToConfig as translatePresetToConfig,
+  };
+}
+
 declare class GPUComposer {
     /**
      * The WebGL context associated with this GPUComposer.
@@ -224,6 +366,10 @@ declare class GPUComposer {
     private _lastTickFPS?;
     private _numTicks;
     /**
+     * Auto-performance profiling options for dynamic quality adjustment.
+     */
+    private _autoProfileOptions?;
+    /**
      * Create a GPUComposer from an existing THREE.WebGLRenderer that shares a single WebGL context.
      * @param renderer - Threejs WebGLRenderer.
      * @param params - GPUComposer parameters.
@@ -242,6 +388,7 @@ declare class GPUComposer {
         clearValue?: number | number[];
         verboseLogging?: boolean;
         errorCallback?: ErrorCallback;
+        autoPerformanceProfile?: AutoProfileOptions;
     }): GPUComposer;
     /**
      * Create a GPUComposer.
@@ -270,6 +417,7 @@ declare class GPUComposer {
         clearValue?: number | number[];
         verboseLogging?: boolean;
         errorCallback?: ErrorCallback;
+        autoPerformanceProfile?: AutoProfileOptions;
     });
     get canvas(): HTMLCanvasElement;
     /**
@@ -1033,7 +1181,7 @@ declare const REPEAT = "REPEAT";
 /**
  * GPULayer array types.
  */
-declare type GPULayerArray = Float32Array | Uint8Array | Int8Array | Uint16Array | Int16Array | Uint32Array | Int32Array;
+type GPULayerArray = Float32Array | Uint8Array | Int8Array | Uint16Array | Int16Array | Uint32Array | Int32Array;
 /**
  * @private
  */
@@ -1041,7 +1189,7 @@ declare const validArrayTypes: (Float32ArrayConstructor | Uint8ArrayConstructor 
 /**
  * GPULayer data types.
  */
-declare type GPULayerType = typeof HALF_FLOAT | typeof FLOAT | typeof UNSIGNED_BYTE | typeof BYTE | typeof UNSIGNED_SHORT | typeof SHORT | typeof UNSIGNED_INT | typeof INT;
+type GPULayerType = typeof HALF_FLOAT | typeof FLOAT | typeof UNSIGNED_BYTE | typeof BYTE | typeof UNSIGNED_SHORT | typeof SHORT | typeof UNSIGNED_INT | typeof INT;
 /**
  * @private
  */
@@ -1049,11 +1197,11 @@ declare const validDataTypes: string[];
 /**
  * GPULayer numComponents options.
  */
-declare type GPULayerNumComponents = 1 | 2 | 3 | 4;
+type GPULayerNumComponents = 1 | 2 | 3 | 4;
 /**
  * GPULayer filter/interpolation types.
  */
-declare type GPULayerFilter = typeof LINEAR | typeof NEAREST;
+type GPULayerFilter = typeof LINEAR | typeof NEAREST;
 /**
  * @private
  */
@@ -1064,7 +1212,7 @@ declare const validFilters: string[];
 /**
  * GPULayer wrap types.
  */
-declare type GPULayerWrap = typeof REPEAT | typeof CLAMP_TO_EDGE;
+type GPULayerWrap = typeof REPEAT | typeof CLAMP_TO_EDGE;
 /**
  * @private
  */
@@ -1073,7 +1221,7 @@ declare const validWraps: string[];
  * The WebGLTexture corresponding to a GPULayer buffer (e.g. currentState or lastState).
  * This data structure also includes a reference back to the GPULayer that it originated from.
  */
-declare type GPULayerState = {
+type GPULayerState = {
     texture: WebGLTexture;
     layer: GPULayer;
 };
@@ -1088,11 +1236,11 @@ declare const RGBA = "RGBA";
 /**
  * Image formats for GPULayer.initFromImage().
  */
-declare type ImageFormat = typeof RGB | typeof RGBA;
+type ImageFormat = typeof RGB | typeof RGBA;
 /**
  * Image types for GPULayer.initFromImage().
  */
-declare type ImageType = typeof UNSIGNED_BYTE | typeof FLOAT | typeof HALF_FLOAT;
+type ImageType = typeof UNSIGNED_BYTE | typeof FLOAT | typeof HALF_FLOAT;
 /**
  * @private
  */
@@ -1112,7 +1260,7 @@ declare const GLSL1 = "100";
 /**
  * GLSL available versions.
  */
-declare type GLSLVersion = typeof GLSL1 | typeof GLSL3;
+type GLSLVersion = typeof GLSL1 | typeof GLSL3;
 /**
  * WebGL2 context ID.
  */
@@ -1144,7 +1292,7 @@ declare const PRECISION_HIGH_P = "highp";
 /**
  * GLSL available precision declarations.
  */
-declare type GLSLPrecision = typeof PRECISION_LOW_P | typeof PRECISION_MEDIUM_P | typeof PRECISION_HIGH_P;
+type GLSLPrecision = typeof PRECISION_LOW_P | typeof PRECISION_MEDIUM_P | typeof PRECISION_HIGH_P;
 /**
  * @private
  */
@@ -1212,19 +1360,19 @@ declare const BOOL_4D_UNIFORM = "BOOL_4D_UNIFORM";
 /**
  * GPUProgram uniform types.
  */
-declare type UniformType = typeof FLOAT | typeof INT | typeof UINT | typeof BOOL;
+type UniformType = typeof FLOAT | typeof INT | typeof UINT | typeof BOOL;
 /**
  * @private
  */
-declare type UniformInternalType = typeof BOOL_1D_UNIFORM | typeof BOOL_2D_UNIFORM | typeof BOOL_3D_UNIFORM | typeof BOOL_4D_UNIFORM | typeof FLOAT_1D_UNIFORM | typeof FLOAT_2D_UNIFORM | typeof FLOAT_3D_UNIFORM | typeof FLOAT_4D_UNIFORM | typeof INT_1D_UNIFORM | typeof INT_2D_UNIFORM | typeof INT_3D_UNIFORM | typeof INT_4D_UNIFORM | typeof UINT_1D_UNIFORM | typeof UINT_2D_UNIFORM | typeof UINT_3D_UNIFORM | typeof UINT_4D_UNIFORM;
+type UniformInternalType = typeof BOOL_1D_UNIFORM | typeof BOOL_2D_UNIFORM | typeof BOOL_3D_UNIFORM | typeof BOOL_4D_UNIFORM | typeof FLOAT_1D_UNIFORM | typeof FLOAT_2D_UNIFORM | typeof FLOAT_3D_UNIFORM | typeof FLOAT_4D_UNIFORM | typeof INT_1D_UNIFORM | typeof INT_2D_UNIFORM | typeof INT_3D_UNIFORM | typeof INT_4D_UNIFORM | typeof UINT_1D_UNIFORM | typeof UINT_2D_UNIFORM | typeof UINT_3D_UNIFORM | typeof UINT_4D_UNIFORM;
 /**
  * GPUProgram uniform values.
  */
-declare type UniformValue = boolean | boolean[] | number | number[];
+type UniformValue = boolean | boolean[] | number | number[];
 /**
  * GPUProgram uniform parameters.
  */
-declare type UniformParams = {
+type UniformParams = {
     name: string;
     value: UniformValue;
     type: UniformType;
@@ -1232,7 +1380,7 @@ declare type UniformParams = {
 /**
  * @private
  */
-declare type Uniform = {
+type Uniform = {
     location: WeakMap<WebGLProgram, WebGLUniformLocation>;
     value: UniformValue;
     type: UniformInternalType;
@@ -1288,14 +1436,14 @@ declare const GPUIO_VS_POSITION_W_ACCUM = "GPUIO_VS_POSITION_W_ACCUM";
 /**
  * @private
  */
-declare type PROGRAM_NAME_INTERNAL = typeof DEFAULT_PROGRAM_NAME | typeof SEGMENT_PROGRAM_NAME | typeof LAYER_POINTS_PROGRAM_NAME | typeof LAYER_LINES_PROGRAM_NAME | typeof LAYER_VECTOR_FIELD_PROGRAM_NAME | typeof LAYER_MESH_PROGRAM_NAME;
+type PROGRAM_NAME_INTERNAL = typeof DEFAULT_PROGRAM_NAME | typeof SEGMENT_PROGRAM_NAME | typeof LAYER_POINTS_PROGRAM_NAME | typeof LAYER_LINES_PROGRAM_NAME | typeof LAYER_VECTOR_FIELD_PROGRAM_NAME | typeof LAYER_MESH_PROGRAM_NAME;
 /**
  * Object containing compile time #define constants for GPUProgram fragment shader.
  */
-declare type CompileTimeConstants = {
+type CompileTimeConstants = {
     [key: string]: string;
 };
-declare type ErrorCallback = (message: string) => void;
+type ErrorCallback = (message: string) => void;
 /**
  * @private
  */
@@ -1380,7 +1528,7 @@ declare const BOUNDARY_TOP = "BOUNDARY_TOP";
 declare const BOUNDARY_BOTTOM = "BOUNDARY_BOTTOM";
 declare const BOUNDARY_LEFT = "BOUNDARY_LEFT";
 declare const BOUNDARY_RIGHT = "BOUNDARY_RIGHT";
-declare type BoundaryEdge = typeof BOUNDARY_TOP | typeof BOUNDARY_BOTTOM | typeof BOUNDARY_LEFT | typeof BOUNDARY_RIGHT;
+type BoundaryEdge = typeof BOUNDARY_TOP | typeof BOUNDARY_BOTTOM | typeof BOUNDARY_LEFT | typeof BOUNDARY_RIGHT;
 
 /**
  * Test whether a GPULayer type is a float type.
@@ -1805,4 +1953,4 @@ declare const renderRGBProgram: typeof renderRGBProgram$1;
 declare const renderAmplitudeProgram: typeof renderAmplitudeProgram$1;
 declare const renderSignedAmplitudeProgram: typeof renderSignedAmplitudeProgram$1;
 
-export { BOOL, BOOL_1D_UNIFORM, BOOL_2D_UNIFORM, BOOL_3D_UNIFORM, BOOL_4D_UNIFORM, BOUNDARY_BOTTOM, BOUNDARY_LEFT, BOUNDARY_RIGHT, BOUNDARY_TOP, BYTE, BoundaryEdge, CLAMP_TO_EDGE, CompileTimeConstants, DEFAULT_CIRCLE_NUM_SEGMENTS, DEFAULT_ERROR_CALLBACK, DEFAULT_PROGRAM_NAME, EXPERIMENTAL_WEBGL, EXPERIMENTAL_WEBGL2, ErrorCallback, FLOAT, FLOAT_1D_UNIFORM, FLOAT_2D_UNIFORM, FLOAT_3D_UNIFORM, FLOAT_4D_UNIFORM, GLSL1, GLSL3, GLSLPrecision, GLSLVersion, GPUComposer, GPUIO_FLOAT_PRECISION, GPUIO_INT_PRECISION, GPUIO_VS_INDEXED_POSITIONS, GPUIO_VS_NORMAL_ATTRIBUTE, GPUIO_VS_POSITION_W_ACCUM, GPUIO_VS_UV_ATTRIBUTE, GPUIO_VS_WRAP_X, GPUIO_VS_WRAP_Y, GPUIndexBuffer, GPULayer, GPULayerArray, GPULayerFilter, GPULayerNumComponents, GPULayerState, GPULayerType, GPULayerWrap, GPUProgram, HALF_FLOAT, INT, INT_1D_UNIFORM, INT_2D_UNIFORM, INT_3D_UNIFORM, INT_4D_UNIFORM, ImageFormat, ImageType, LAYER_LINES_PROGRAM_NAME, LAYER_MESH_PROGRAM_NAME, LAYER_POINTS_PROGRAM_NAME, LAYER_VECTOR_FIELD_PROGRAM_NAME, LINEAR, MAX_BYTE, MAX_FLOAT_INT, MAX_HALF_FLOAT_INT, MAX_INT, MAX_SHORT, MAX_UNSIGNED_BYTE, MAX_UNSIGNED_INT, MAX_UNSIGNED_SHORT, MIN_BYTE, MIN_FLOAT_INT, MIN_HALF_FLOAT_INT, MIN_INT, MIN_SHORT, MIN_UNSIGNED_BYTE, MIN_UNSIGNED_INT, MIN_UNSIGNED_SHORT, NEAREST, PRECISION_HIGH_P, PRECISION_LOW_P, PRECISION_MEDIUM_P, PROGRAM_NAME_INTERNAL, REPEAT, RGB, RGBA, SEGMENT_PROGRAM_NAME, SHORT, UINT, UINT_1D_UNIFORM, UINT_2D_UNIFORM, UINT_3D_UNIFORM, UINT_4D_UNIFORM, UNSIGNED_BYTE, UNSIGNED_INT, UNSIGNED_SHORT, Uniform, UniformInternalType, UniformParams, UniformType, UniformValue, WEBGL1, WEBGL2, _testing, addLayersProgram, addValueProgram, copyProgram, getFragmentShaderMediumpPrecision, getVertexShaderMediumpPrecision, isHighpSupportedInFragmentShader, isHighpSupportedInVertexShader, isWebGL2, isWebGL2Supported, multiplyValueProgram, renderAmplitudeProgram, renderRGBProgram, renderSignedAmplitudeProgram, setColorProgram, setValueProgram, validArrayTypes, validDataTypes, validFilters, validImageFormats, validImageTypes, validWraps, zeroProgram };
+export { BOOL, BOOL_1D_UNIFORM, BOOL_2D_UNIFORM, BOOL_3D_UNIFORM, BOOL_4D_UNIFORM, BOUNDARY_BOTTOM, BOUNDARY_LEFT, BOUNDARY_RIGHT, BOUNDARY_TOP, BYTE, BoundaryEdge, CLAMP_TO_EDGE, CompileTimeConstants, DEFAULT_CIRCLE_NUM_SEGMENTS, DEFAULT_ERROR_CALLBACK, DEFAULT_PROGRAM_NAME, EXPERIMENTAL_WEBGL, EXPERIMENTAL_WEBGL2, ErrorCallback, FLOAT, FLOAT_1D_UNIFORM, FLOAT_2D_UNIFORM, FLOAT_3D_UNIFORM, FLOAT_4D_UNIFORM, GLSL1, GLSL3, GLSLPrecision, GLSLVersion, GPUComposer, GPUIO_FLOAT_PRECISION, GPUIO_INT_PRECISION, GPUIO_VS_INDEXED_POSITIONS, GPUIO_VS_NORMAL_ATTRIBUTE, GPUIO_VS_POSITION_W_ACCUM, GPUIO_VS_UV_ATTRIBUTE, GPUIO_VS_WRAP_X, GPUIO_VS_WRAP_Y, GPUIndexBuffer, GPULayer, GPULayerArray, GPULayerFilter, GPULayerNumComponents, GPULayerState, GPULayerType, GPULayerWrap, GPUProgram, HALF_FLOAT, INT, INT_1D_UNIFORM, INT_2D_UNIFORM, INT_3D_UNIFORM, INT_4D_UNIFORM, ImageFormat, ImageType, LAYER_LINES_PROGRAM_NAME, LAYER_MESH_PROGRAM_NAME, LAYER_POINTS_PROGRAM_NAME, LAYER_VECTOR_FIELD_PROGRAM_NAME, LINEAR, MAX_BYTE, MAX_FLOAT_INT, MAX_HALF_FLOAT_INT, MAX_INT, MAX_SHORT, MAX_UNSIGNED_BYTE, MAX_UNSIGNED_INT, MAX_UNSIGNED_SHORT, MIN_BYTE, MIN_FLOAT_INT, MIN_HALF_FLOAT_INT, MIN_INT, MIN_SHORT, MIN_UNSIGNED_BYTE, MIN_UNSIGNED_INT, MIN_UNSIGNED_SHORT, NEAREST, PRECISION_HIGH_P, PRECISION_LOW_P, PRECISION_MEDIUM_P, PROGRAM_NAME_INTERNAL, REPEAT, RGB, RGBA, SEGMENT_PROGRAM_NAME, SHORT, UINT, UINT_1D_UNIFORM, UINT_2D_UNIFORM, UINT_3D_UNIFORM, UINT_4D_UNIFORM, UNSIGNED_BYTE, UNSIGNED_INT, UNSIGNED_SHORT, Uniform, UniformInternalType, UniformParams, UniformType, UniformValue, WEBGL1, WEBGL2, _testing, addLayersProgram, addValueProgram, copyProgram, getFragmentShaderMediumpPrecision, getVertexShaderMediumpPrecision, isHighpSupportedInFragmentShader, isHighpSupportedInVertexShader, isWebGL2, isWebGL2Supported, multiplyValueProgram, autoProfile_d as performance, renderAmplitudeProgram, renderRGBProgram, renderSignedAmplitudeProgram, setColorProgram, setValueProgram, validArrayTypes, validDataTypes, validFilters, validImageFormats, validImageTypes, validWraps, zeroProgram };

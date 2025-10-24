@@ -18,7 +18,7 @@
     OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
     PERFORMANCE OF THIS SOFTWARE.
     ***************************************************************************** */
-    /* global Reflect, Promise */
+    /* global Reflect, Promise, SuppressedError, Symbol, Iterator */
 
     var extendStatics = function(d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -57,8 +57,8 @@
     }
 
     function __generator(thisArg, body) {
-        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+        return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
         function verb(n) { return function (v) { return step([n, v]); }; }
         function step(op) {
             if (f) throw new TypeError("Generator is already executing.");
@@ -94,149 +94,71 @@
         return to.concat(ar || Array.prototype.slice.call(from));
     }
 
-    var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+    typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+        var e = new Error(message);
+        return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+    };
 
-    var typeChecks = {exports: {}};
-
-    (function (module, exports) {
-    	(function (global, factory) {
-    		factory(exports) ;
-    	})(commonjsGlobal, (function (exports) {
-    		/**
-    		 * Checks if value is a number (including Infinity).
-    		 */
-    		function isNumber(value) {
-    		    return !Number.isNaN(value) && typeof value === 'number';
-    		}
-    		/**
-    		 * Checks if value is finite number.
-    		 */
-    		function isFiniteNumber(value) {
-    		    return isNumber(value) && Number.isFinite(value);
-    		}
-    		/**
-    		 * Checks if value is integer.
-    		 */
-    		function isInteger(value) {
-    		    return isFiniteNumber(value) && (value % 1 === 0);
-    		}
-    		/**
-    		 * Checks if value is positive number (> 0).
-    		 */
-    		function isPositiveNumber(value) {
-    		    return isNumber(value) && value > 0;
-    		}
-    		/**
-    		 * Checks if value is positive integer (> 0).
-    		 */
-    		function isPositiveInteger(value) {
-    		    return isInteger(value) && value > 0;
-    		}
-    		/**
-    		 * Checks if value is negative number (< 0).
-    		 */
-    		function isNegativeNumber(value) {
-    		    return isNumber(value) && value < 0;
-    		}
-    		/**
-    		 * Checks if value is negative integer (< 0).
-    		 */
-    		function isNegativeInteger(value) {
-    		    return isInteger(value) && value < 0;
-    		}
-    		/**
-    		 * Checks if value is non-negative number (>= 0).
-    		 */
-    		function isNonNegativeNumber(value) {
-    		    return isNumber(value) && value >= 0;
-    		}
-    		/**
-    		 * Checks if value is non-negative integer (>= 0).
-    		 */
-    		function isNonNegativeInteger(value) {
-    		    return isInteger(value) && value >= 0;
-    		}
-    		/**
-    		 * Checks if value is non-positive number (<= 0).
-    		 */
-    		function isNonPositiveNumber(value) {
-    		    return isNumber(value) && value <= 0;
-    		}
-    		/**
-    		 * Checks if value is non-positive integer (<= 0).
-    		 */
-    		function isNonPositiveInteger(value) {
-    		    return isInteger(value) && value <= 0;
-    		}
-    		/**
-    		 * Checks if value is number in range [min, max].
-    		 */
-    		function isNumberInRange(value, min, max) {
-    		    return isNumber(value) && value >= min && value <= max;
-    		}
-    		/**
-    		 * Checks if value is integer in range [min, max].
-    		 */
-    		function isIntegerInRange(value, min, max) {
-    		    return isInteger(value) && value >= min && value <= max;
-    		}
-    		/**
-    		 * Checks if value is string.
-    		 */
-    		function isString(value) {
-    		    return typeof value === 'string';
-    		}
-    		/**
-    		 * Checks if value is TypedArray.
-    		 */
-    		function isTypedArray(value) {
-    		    return ArrayBuffer.isView(value) && !(value instanceof DataView);
-    		}
-    		/**
-    		 * Checks if value is Array or TypedArray.
-    		 */
-    		function isArray(value) {
-    		    return Array.isArray(value) || isTypedArray(value);
-    		}
-    		/**
-    		 * Checks if value is Javascript object.
-    		 */
-    		function isObject(value) {
-    		    return typeof value === 'object' && !isArray(value) && value !== null && !(value instanceof ArrayBuffer) && !(value instanceof DataView);
-    		}
-    		/**
-    		 * Checks if value is boolean.
-    		 */
-    		function isBoolean(value) {
-    		    return typeof value === 'boolean';
-    		}
-
-    		exports.isArray = isArray;
-    		exports.isBoolean = isBoolean;
-    		exports.isFiniteNumber = isFiniteNumber;
-    		exports.isInteger = isInteger;
-    		exports.isIntegerInRange = isIntegerInRange;
-    		exports.isNegativeInteger = isNegativeInteger;
-    		exports.isNegativeNumber = isNegativeNumber;
-    		exports.isNonNegativeInteger = isNonNegativeInteger;
-    		exports.isNonNegativeNumber = isNonNegativeNumber;
-    		exports.isNonPositiveInteger = isNonPositiveInteger;
-    		exports.isNonPositiveNumber = isNonPositiveNumber;
-    		exports.isNumber = isNumber;
-    		exports.isNumberInRange = isNumberInRange;
-    		exports.isObject = isObject;
-    		exports.isPositiveInteger = isPositiveInteger;
-    		exports.isPositiveNumber = isPositiveNumber;
-    		exports.isString = isString;
-    		exports.isTypedArray = isTypedArray;
-
-    		Object.defineProperty(exports, '__esModule', { value: true });
-
-    	}));
-    	
-    } (typeChecks, typeChecks.exports));
-
-    var typeChecksExports = typeChecks.exports;
+    /**
+     * Checks if value is a number (including Infinity).
+     */
+    function isNumber(value) {
+        return !Number.isNaN(value) && typeof value === 'number';
+    }
+    /**
+     * Checks if value is finite number.
+     */
+    function isFiniteNumber(value) {
+        return isNumber(value) && Number.isFinite(value);
+    }
+    /**
+     * Checks if value is integer.
+     */
+    function isInteger(value) {
+        return isFiniteNumber(value) && (value % 1 === 0);
+    }
+    /**
+     * Checks if value is positive integer (> 0).
+     */
+    function isPositiveInteger(value) {
+        return isInteger(value) && value > 0;
+    }
+    /**
+     * Checks if value is non-negative integer (>= 0).
+     */
+    function isNonNegativeInteger(value) {
+        return isInteger(value) && value >= 0;
+    }
+    /**
+     * Checks if value is string.
+     */
+    function isString(value) {
+        return typeof value === 'string';
+    }
+    /**
+     * Checks if value is TypedArray.
+     */
+    function isTypedArray$1(value) {
+        return ArrayBuffer.isView(value) && !(value instanceof DataView);
+    }
+    /**
+     * Checks if value is Array or TypedArray.
+     */
+    function isArray(value) {
+        return Array.isArray(value) || isTypedArray$1(value);
+    }
+    /**
+     * Checks if value is Javascript object.
+     */
+    function isObject$1(value) {
+        return typeof value === 'object' && !isArray(value) && value !== null && !(value instanceof ArrayBuffer) && !(value instanceof DataView);
+    }
+    /**
+     * Checks if value is boolean.
+     */
+    function isBoolean(value) {
+        return typeof value === 'boolean';
+    }
 
     // Data types and constants.
     /**
@@ -1416,7 +1338,7 @@
         for (var i = 0; i < keys.length; i++) {
             var key = keys[i];
             // Check that define is passed in as a string.
-            if (!typeChecksExports.isString(key) || !typeChecksExports.isString(compileTimeConstants[key])) {
+            if (!isString(key) || !isString(compileTimeConstants[key])) {
                 throw new Error("GPUProgram compile time constants must be passed in as key value pairs that are both strings, got key value pair of type [".concat(typeof key, " : ").concat(typeof compileTimeConstants[key], "] for key ").concat(key, "."));
             }
             CTCSource += "#define ".concat(key, " ").concat(compileTimeConstants[key], "\n");
@@ -1828,19 +1750,19 @@
     function uniformInternalTypeForValue(value, type, uniformName, programName) {
         if (type === FLOAT) {
             // Check that we are dealing with a number.
-            if (typeChecksExports.isArray(value)) {
+            if (isArray(value)) {
                 for (var i = 0; i < value.length; i++) {
-                    if (!typeChecksExports.isFiniteNumber(value[i])) {
+                    if (!isFiniteNumber(value[i])) {
                         throw new Error("Invalid value ".concat(JSON.stringify(value), " for uniform \"").concat(uniformName, "\" in program \"").concat(programName, "\", expected float or float[] of length 1-4."));
                     }
                 }
             }
             else {
-                if (!typeChecksExports.isFiniteNumber(value)) {
+                if (!isFiniteNumber(value)) {
                     throw new Error("Invalid value ".concat(JSON.stringify(value), " for uniform \"").concat(uniformName, "\" in program \"").concat(programName, "\", expected float or float[] of length 1-4."));
                 }
             }
-            if (!typeChecksExports.isArray(value) || value.length === 1) {
+            if (!isArray(value) || value.length === 1) {
                 return FLOAT_1D_UNIFORM;
             }
             if (value.length === 2) {
@@ -1856,19 +1778,19 @@
         }
         else if (type === INT) {
             // Check that we are dealing with an int.
-            if (typeChecksExports.isArray(value)) {
+            if (isArray(value)) {
                 for (var i = 0; i < value.length; i++) {
-                    if (!typeChecksExports.isInteger(value[i])) {
+                    if (!isInteger(value[i])) {
                         throw new Error("Invalid value ".concat(JSON.stringify(value), " for uniform \"").concat(uniformName, "\" in program \"").concat(programName, "\", expected int or int[] of length 1-4."));
                     }
                 }
             }
             else {
-                if (!typeChecksExports.isInteger(value)) {
+                if (!isInteger(value)) {
                     throw new Error("Invalid value ".concat(JSON.stringify(value), " for uniform \"").concat(uniformName, "\" in program \"").concat(programName, "\", expected int or int[] of length 1-4."));
                 }
             }
-            if (!typeChecksExports.isArray(value) || value.length === 1) {
+            if (!isArray(value) || value.length === 1) {
                 return INT_1D_UNIFORM;
             }
             if (value.length === 2) {
@@ -1884,19 +1806,19 @@
         }
         else if (type === UINT) {
             // Check that we are dealing with a uint.
-            if (typeChecksExports.isArray(value)) {
+            if (isArray(value)) {
                 for (var i = 0; i < value.length; i++) {
-                    if (!typeChecksExports.isNonNegativeInteger(value[i])) {
+                    if (!isNonNegativeInteger(value[i])) {
                         throw new Error("Invalid value ".concat(JSON.stringify(value), " for uniform \"").concat(uniformName, "\" in program \"").concat(programName, "\", expected uint or uint[] of length 1-4."));
                     }
                 }
             }
             else {
-                if (!typeChecksExports.isNonNegativeInteger(value)) {
+                if (!isNonNegativeInteger(value)) {
                     throw new Error("Invalid value ".concat(JSON.stringify(value), " for uniform \"").concat(uniformName, "\" in program \"").concat(programName, "\", expected uint or uint[] of length 1-4."));
                 }
             }
-            if (!typeChecksExports.isArray(value) || value.length === 1) {
+            if (!isArray(value) || value.length === 1) {
                 return UINT_1D_UNIFORM;
             }
             if (value.length === 2) {
@@ -1912,19 +1834,19 @@
         }
         else if (type === BOOL) {
             // Check that we are dealing with a boolean.
-            if (typeChecksExports.isArray(value)) {
+            if (isArray(value)) {
                 for (var i = 0; i < value.length; i++) {
-                    if (!typeChecksExports.isBoolean(value[i])) {
+                    if (!isBoolean(value[i])) {
                         throw new Error("Invalid value ".concat(JSON.stringify(value), " for uniform \"").concat(uniformName, "\" in program \"").concat(programName, "\", expected bool or bool[] of length 1-4."));
                     }
                 }
             }
             else {
-                if (!typeChecksExports.isBoolean(value)) {
+                if (!isBoolean(value)) {
                     throw new Error("Invalid value ".concat(JSON.stringify(value), " for uniform \"").concat(uniformName, "\" in program \"").concat(programName, "\", expected bool or bool[] of length 1-4."));
                 }
             }
-            if (!typeChecksExports.isArray(value) || value.length === 1) {
+            if (!isArray(value) || value.length === 1) {
                 return BOOL_1D_UNIFORM;
             }
             if (value.length === 2) {
@@ -2020,6 +1942,8 @@
             });
         });
     }
+
+    var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
     var dist = {};
 
@@ -2234,9 +2158,13 @@
     const ITERATOR_PROPERTY_IS_NOT_CALLABLE = "@@iterator property is not callable";
     const REDUCE_OF_EMPTY_ARRAY_WITH_NO_INITIAL_VALUE =
       "Reduce of empty array with no initial value";
+    const THE_COMPARISON_FUNCTION_MUST_BE_EITHER_A_FUNCTION_OR_UNDEFINED =
+      "The comparison function must be either a function or undefined";
     const OFFSET_IS_OUT_OF_BOUNDS = "Offset is out of bounds";
 
     /* eslint-disable no-restricted-globals, no-restricted-syntax */
+    /* global SharedArrayBuffer */
+
 
     /** @type {<T extends (...args: any) => any>(target: T) => (thisArg: ThisType<T>, ...args: any[]) => any} */
     function uncurryThis(target) {
@@ -2274,7 +2202,8 @@
 
     // Number
     const {
-      MAX_SAFE_INTEGER: MAX_SAFE_INTEGER,
+      EPSILON,
+      MAX_SAFE_INTEGER,
       isFinite: NumberIsFinite,
       isNaN: NumberIsNaN,
     } = Number;
@@ -2339,7 +2268,10 @@
     const ArrayPrototypeSymbolIterator = uncurryThis(NativeArrayPrototypeSymbolIterator);
 
     // Math
-    const MathTrunc = Math.trunc;
+    const {
+      abs: MathAbs,
+      trunc: MathTrunc,
+    } = Math;
 
     // ArrayBuffer
     const NativeArrayBuffer = ArrayBuffer;
@@ -2414,6 +2346,9 @@
       SymbolToStringTag
     );
 
+    // Uint8Array
+    const NativeUint8Array = Uint8Array;
+
     // Uint16Array
     const NativeUint16Array = Uint16Array;
     /** @type {Uint16ArrayConstructor["from"]} */
@@ -2458,7 +2393,6 @@
     // WeakSet
     /**
      * Do not construct with arguments to avoid calling the "add" method
-     *
      * @type {{new <T extends {}>(): WeakSet<T>}}
      */
     const NativeWeakSet = WeakSet;
@@ -2471,7 +2405,6 @@
     // WeakMap
     /**
      * Do not construct with arguments to avoid calling the "set" method
-     *
      * @type {{new <K extends {}, V>(): WeakMap<K, V>}}
      */
     const NativeWeakMap = WeakMap;
@@ -2503,11 +2436,13 @@
 
     /**
      * Wrap the Array around the SafeIterator If Array.prototype [@@iterator] has been modified
-     *
      * @type {<T>(array: T[]) => Iterable<T>}
      */
     function safeIfNeeded(array) {
-      if (array[SymbolIterator] === NativeArrayPrototypeSymbolIterator) {
+      if (
+        array[SymbolIterator] === NativeArrayPrototypeSymbolIterator &&
+        ArrayIteratorPrototype.next === ArrayIteratorPrototypeNext
+      ) {
         return array;
       }
 
@@ -2543,7 +2478,6 @@
 
     /**
      * Wrap the Generator around the dummy ArrayIterator
-     *
      * @type {<T>(generator: Generator<T>) => IterableIterator<T>}
      */
     function wrap(generator) {
@@ -2557,8 +2491,10 @@
      * @returns {value is {}}
      */
     function isObject(value) {
-      return (value !== null && typeof value === "object") ||
-        typeof value === "function";
+      return (
+        (value !== null && typeof value === "object") ||
+        typeof value === "function"
+      );
     }
 
     /**
@@ -2586,8 +2522,10 @@
      */
     function isNativeBigIntTypedArray(value) {
       const typedArrayName = TypedArrayPrototypeGetSymbolToStringTag(value);
-      return typedArrayName === "BigInt64Array" ||
-        typedArrayName === "BigUint64Array";
+      return (
+        typedArrayName === "BigInt64Array" ||
+        typedArrayName === "BigUint64Array"
+      );
     }
 
     /**
@@ -2596,6 +2534,10 @@
      */
     function isArrayBuffer(value) {
       try {
+        // ArrayBuffers are never arrays
+        if (ArrayIsArray(value)) {
+          return false;
+        }
         ArrayBufferPrototypeGetByteLength(/** @type {any} */ (value));
         return true;
       } catch (e) {
@@ -2622,6 +2564,14 @@
 
     /**
      * @param {unknown} value
+     * @returns {value is ArrayBuffer|SharedArrayBuffer}
+     */
+    function isAnyArrayBuffer(value) {
+      return isArrayBuffer(value) || isSharedArrayBuffer(value);
+    }
+
+    /**
+     * @param {unknown} value
      * @returns {value is unknown[]}
      */
     function isOrdinaryArray(value) {
@@ -2629,14 +2579,11 @@
         return false;
       }
 
-      if (value[SymbolIterator] === NativeArrayPrototypeSymbolIterator) {
-        return true;
-      }
-
-      // for other realms
-      // eslint-disable-next-line no-restricted-syntax
-      const iterator = value[SymbolIterator]();
-      return iterator[SymbolToStringTag] === "Array Iterator";
+      // Verify that there are no changes in ArrayIterator
+      return (
+        value[SymbolIterator] === NativeArrayPrototypeSymbolIterator &&
+        ArrayIteratorPrototype.next === ArrayIteratorPrototypeNext
+      );
     }
 
     /**
@@ -2648,14 +2595,11 @@
         return false;
       }
 
-      if (value[SymbolIterator] === NativeTypedArrayPrototypeSymbolIterator) {
-        return true;
-      }
-
-      // for other realms
-      // eslint-disable-next-line no-restricted-syntax
-      const iterator = value[SymbolIterator]();
-      return iterator[SymbolToStringTag] === "Array Iterator";
+      // Verify that there are no changes in ArrayIterator
+      return (
+        value[SymbolIterator] === NativeTypedArrayPrototypeSymbolIterator &&
+        ArrayIteratorPrototype.next === ArrayIteratorPrototypeNext
+      );
     }
 
     /**
@@ -2707,20 +2651,72 @@
       return ReflectHas(constructor, brand);
     }
 
-    // algorithm: http://fox-toolkit.org/ftp/fasthalffloatconversion.pdf
+    const INVERSE_OF_EPSILON = 1 / EPSILON;
+
+    /**
+     * rounds to the nearest value;
+     * if the number falls midway, it is rounded to the nearest value with an even least significant digit
+     * @param {number} num
+     * @returns {number}
+     */
+    function roundTiesToEven(num) {
+      return (num + INVERSE_OF_EPSILON) - INVERSE_OF_EPSILON;
+    }
+
+    const FLOAT16_MIN_VALUE = 6.103515625e-05;
+    const FLOAT16_MAX_VALUE = 65504;
+    const FLOAT16_EPSILON = 0.0009765625;
+
+    const FLOAT16_EPSILON_MULTIPLIED_BY_FLOAT16_MIN_VALUE = FLOAT16_EPSILON * FLOAT16_MIN_VALUE;
+    const FLOAT16_EPSILON_DEVIDED_BY_EPSILON = FLOAT16_EPSILON * INVERSE_OF_EPSILON;
+
+    /**
+     * round a number to a half float number
+     * @param {unknown} num - double float
+     * @returns {number} half float number
+     */
+    function roundToFloat16(num) {
+      const number = +num;
+
+      // NaN, Infinity, -Infinity, 0, -0
+      if (!NumberIsFinite(number) || number === 0) {
+        return number;
+      }
+
+      // finite except 0, -0
+      const sign = number > 0 ? 1 : -1;
+      const absolute = MathAbs(number);
+
+      // small number
+      if (absolute < FLOAT16_MIN_VALUE) {
+        return sign * roundTiesToEven(absolute / FLOAT16_EPSILON_MULTIPLIED_BY_FLOAT16_MIN_VALUE) * FLOAT16_EPSILON_MULTIPLIED_BY_FLOAT16_MIN_VALUE;
+      }
+
+      const temp = (1 + FLOAT16_EPSILON_DEVIDED_BY_EPSILON) * absolute;
+      const result = temp - (temp - absolute);
+
+      // large number
+      if (result > FLOAT16_MAX_VALUE || NumberIsNaN(result)) {
+        return sign * Infinity;
+      }
+
+      return sign * result;
+    }
+
+    // base algorithm: http://fox-toolkit.org/ftp/fasthalffloatconversion.pdf
 
     const buffer = new NativeArrayBuffer(4);
     const floatView = new NativeFloat32Array(buffer);
     const uint32View = new NativeUint32Array(buffer);
 
-    const baseTable = new NativeUint32Array(512);
-    const shiftTable = new NativeUint32Array(512);
+    const baseTable = new NativeUint16Array(512);
+    const shiftTable = new NativeUint8Array(512);
 
     for (let i = 0; i < 256; ++i) {
       const e = i - 127;
 
       // very small number (0, -0)
-      if (e < -27) {
+      if (e < -24) {
         baseTable[i]         = 0x0000;
         baseTable[i | 0x100] = 0x8000;
         shiftTable[i]         = 24;
@@ -2758,33 +2754,29 @@
 
     /**
      * round a number to a half float number bits
-     *
      * @param {unknown} num - double float
      * @returns {number} half float number bits
      */
     function roundToFloat16Bits(num) {
-      floatView[0] = /** @type {any} */ (num);
+      floatView[0] = roundToFloat16(num);
       const f = uint32View[0];
       const e = (f >> 23) & 0x1ff;
       return baseTable[e] + ((f & 0x007fffff) >> shiftTable[e]);
     }
 
     const mantissaTable = new NativeUint32Array(2048);
-    const exponentTable = new NativeUint32Array(64);
-    const offsetTable = new NativeUint32Array(64);
-
     for (let i = 1; i < 1024; ++i) {
-      let m = i << 13;    // zero pad mantissa bits
-      let e = 0;          // zero exponent
+      let m = i << 13; // zero pad mantissa bits
+      let e = 0; // zero exponent
 
       // normalized
-      while((m & 0x00800000) === 0) {
+      while ((m & 0x00800000) === 0) {
         m <<= 1;
-        e -= 0x00800000;  // decrement exponent
+        e -= 0x00800000; // decrement exponent
       }
 
-      m &= ~0x00800000;   // clear leading 1 bit
-      e += 0x38800000;    // adjust bias
+      m &= ~0x00800000; // clear leading 1 bit
+      e += 0x38800000; // adjust bias
 
       mantissaTable[i] = m | e;
     }
@@ -2792,6 +2784,7 @@
       mantissaTable[i] = 0x38000000 + ((i - 1024) << 13);
     }
 
+    const exponentTable = new NativeUint32Array(64);
     for (let i = 1; i < 31; ++i) {
       exponentTable[i] = i << 23;
     }
@@ -2802,6 +2795,7 @@
     }
     exponentTable[63] = 0xc7800000;
 
+    const offsetTable = new NativeUint16Array(64);
     for (let i = 1; i < 64; ++i) {
       if (i !== 32) {
         offsetTable[i] = 1024;
@@ -2810,13 +2804,12 @@
 
     /**
      * convert a half float number bits to a number
-     *
      * @param {number} float16bits - half float number bits
      * @returns {number} double float
      */
     function convertToNumber(float16bits) {
-      const m = float16bits >> 10;
-      uint32View[0] = mantissaTable[offsetTable[m] + (float16bits & 0x3ff)] + exponentTable[m];
+      const i = float16bits >> 10;
+      uint32View[0] = mantissaTable[offsetTable[i] + (float16bits & 0x3ff)] + exponentTable[i];
       return floatView[0];
     }
 
@@ -2898,7 +2891,6 @@
 
     /**
      * bigint comparisons are not supported
-     *
      * @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.sort
      * @param {number} x
      * @param {number} y
@@ -3121,7 +3113,7 @@
 
         if (isFloat16Array(input)) {
           float16bitsArray = ReflectConstruct(NativeUint16Array, [getFloat16BitsArray(input)], new.target);
-        } else if (isObject(input) && !isArrayBuffer(input)) { // object without ArrayBuffer
+        } else if (isObject(input) && !isAnyArrayBuffer(input)) { // object without ArrayBuffer, SharedArrayBuffer
           /** @type {ArrayLike<unknown>} */
           let list;
           /** @type {number} */
@@ -3132,12 +3124,6 @@
             length = TypedArrayPrototypeGetLength(input);
 
             const buffer = TypedArrayPrototypeGetBuffer(input);
-            const BufferConstructor = !isSharedArrayBuffer(buffer)
-              ? /** @type {ArrayBufferConstructor} */ (SpeciesConstructor(
-                buffer,
-                NativeArrayBuffer
-              ))
-              : NativeArrayBuffer;
 
             if (IsDetachedBuffer(buffer)) {
               throw NativeTypeError(ATTEMPTING_TO_ACCESS_DETACHED_ARRAYBUFFER);
@@ -3147,7 +3133,7 @@
               throw NativeTypeError(CANNOT_MIX_BIGINT_AND_OTHER_TYPES);
             }
 
-            const data = new BufferConstructor(
+            const data = new NativeArrayBuffer(
               length * BYTES_PER_ELEMENT
             );
             float16bitsArray = ReflectConstruct(NativeUint16Array, [data], new.target);
@@ -3178,7 +3164,7 @@
           for (let i = 0; i < length; ++i) {
             float16bitsArray[i] = roundToFloat16Bits(list[i]);
           }
-        } else { // primitive, ArrayBuffer
+        } else { // primitive, ArrayBuffer, SharedArrayBuffer
           float16bitsArray = ReflectConstruct(NativeUint16Array, arguments, new.target);
         }
 
@@ -3193,7 +3179,6 @@
 
       /**
        * limitation: `Object.getOwnPropertyNames(Float16Array)` or `Reflect.ownKeys(Float16Array)` include this key
-       *
        * @see https://tc39.es/ecma262/#sec-%typedarray%.from
        */
       static from(src, ...opts) {
@@ -3293,7 +3278,6 @@
 
       /**
        * limitation: `Object.getOwnPropertyNames(Float16Array)` or `Reflect.ownKeys(Float16Array)` include this key
-       *
        * @see https://tc39.es/ecma262/#sec-%typedarray%.of
        */
       static of(...items) {
@@ -3338,7 +3322,6 @@
 
       /**
        * limitation: returns a object whose prototype is not `%ArrayIteratorPrototype%`
-       *
        * @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.values
        */
       values() {
@@ -3355,7 +3338,6 @@
 
       /**
        * limitation: returns a object whose prototype is not `%ArrayIteratorPrototype%`
-       *
        * @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.entries
        */
       entries() {
@@ -3365,7 +3347,7 @@
         return wrap((function* () {
           // eslint-disable-next-line no-restricted-syntax
           for (const [i, val] of TypedArrayPrototypeEntries(float16bitsArray)) {
-            yield /** @type {[Number, number]} */ ([i, convertToNumber(val)]);
+            yield /** @type {[number, number]} */ ([i, convertToNumber(val)]);
           }
         })());
       }
@@ -3384,6 +3366,39 @@
         }
 
         return convertToNumber(float16bitsArray[k]);
+      }
+
+      /** @see https://tc39.es/proposal-change-array-by-copy/#sec-%typedarray%.prototype.with */
+      with(index, value) {
+        assertFloat16Array(this);
+        const float16bitsArray = getFloat16BitsArray(this);
+
+        const length = TypedArrayPrototypeGetLength(float16bitsArray);
+        const relativeIndex = ToIntegerOrInfinity(index);
+        const k = relativeIndex >= 0 ? relativeIndex : length + relativeIndex;
+
+        const number = +value;
+
+        if (k < 0 || k >= length) {
+          throw NativeRangeError(OFFSET_IS_OUT_OF_BOUNDS);
+        }
+
+        // don't use SpeciesConstructor
+        const uint16 = new NativeUint16Array(
+          TypedArrayPrototypeGetBuffer(float16bitsArray),
+          TypedArrayPrototypeGetByteOffset(float16bitsArray),
+          TypedArrayPrototypeGetLength(float16bitsArray)
+        );
+        const cloned = new Float16Array(
+          TypedArrayPrototypeGetBuffer(
+            TypedArrayPrototypeSlice(uint16)
+          )
+        );
+        const array = getFloat16BitsArray(cloned);
+
+        array[k] = roundToFloat16Bits(number);
+
+        return cloned;
       }
 
       /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.map */
@@ -3701,6 +3716,29 @@
         return this;
       }
 
+      /** @see https://tc39.es/proposal-change-array-by-copy/#sec-%typedarray%.prototype.toReversed */
+      toReversed() {
+        assertFloat16Array(this);
+        const float16bitsArray = getFloat16BitsArray(this);
+
+        // don't use SpeciesConstructor
+        const uint16 = new NativeUint16Array(
+          TypedArrayPrototypeGetBuffer(float16bitsArray),
+          TypedArrayPrototypeGetByteOffset(float16bitsArray),
+          TypedArrayPrototypeGetLength(float16bitsArray)
+        );
+        const cloned = new Float16Array(
+          TypedArrayPrototypeGetBuffer(
+            TypedArrayPrototypeSlice(uint16)
+          )
+        );
+
+        const clonedFloat16bitsArray = getFloat16BitsArray(cloned);
+        TypedArrayPrototypeReverse(clonedFloat16bitsArray);
+
+        return cloned;
+      }
+
       /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.fill */
       fill(value, ...opts) {
         assertFloat16Array(this);
@@ -3736,6 +3774,36 @@
         });
 
         return this;
+      }
+
+      /** @see https://tc39.es/proposal-change-array-by-copy/#sec-%typedarray%.prototype.toSorted */
+      toSorted(compareFn) {
+        assertFloat16Array(this);
+        const float16bitsArray = getFloat16BitsArray(this);
+
+        if (compareFn !== undefined && typeof compareFn !== "function") {
+          throw new NativeTypeError(THE_COMPARISON_FUNCTION_MUST_BE_EITHER_A_FUNCTION_OR_UNDEFINED);
+        }
+        const sortCompare = compareFn !== undefined ? compareFn : defaultCompare;
+
+        // don't use SpeciesConstructor
+        const uint16 = new NativeUint16Array(
+          TypedArrayPrototypeGetBuffer(float16bitsArray),
+          TypedArrayPrototypeGetByteOffset(float16bitsArray),
+          TypedArrayPrototypeGetLength(float16bitsArray)
+        );
+        const cloned = new Float16Array(
+          TypedArrayPrototypeGetBuffer(
+            TypedArrayPrototypeSlice(uint16)
+          )
+        );
+
+        const clonedFloat16bitsArray = getFloat16BitsArray(cloned);
+        TypedArrayPrototypeSort(clonedFloat16bitsArray, (x, y) => {
+          return sortCompare(convertToNumber(x), convertToNumber(y));
+        });
+
+        return cloned;
       }
 
       /** @see https://tc39.es/ecma262/#sec-%typedarray%.prototype.slice */
@@ -3977,7 +4045,6 @@
       configurable: true,
     });
 
-    // To make `new Float16Array() instanceof Uint16Array` returns `false`
     ReflectSetPrototypeOf(Float16ArrayPrototype, TypedArrayPrototype);
 
     /**
@@ -3990,7 +4057,6 @@
 
     /**
      * returns an unsigned 16-bit float at the specified byte offset from the start of the DataView
-     *
      * @param {DataView} dataView
      * @param {number} byteOffset
      * @param {[boolean]} opts
@@ -4004,7 +4070,6 @@
 
     /**
      * stores an unsigned 16-bit float value at the specified byte offset from the start of the DataView
-     *
      * @param {DataView} dataView
      * @param {number} byteOffset
      * @param {number} value
@@ -4069,7 +4134,7 @@
      * @private
      */
     function isValidClearValue(clearValue, numComponents, type) {
-        if (typeChecksExports.isArray(clearValue)) {
+        if (isArray(clearValue)) {
             // Length of clearValue must match numComponents.
             if (clearValue.length !== numComponents) {
                 return false;
@@ -4096,7 +4161,7 @@
         switch (type) {
             case HALF_FLOAT:
             case FLOAT:
-                return typeChecksExports.isFiniteNumber(value);
+                return isFiniteNumber(value);
             case BYTE:
                 // -(2 ** 7)
                 if (value < -128)
@@ -4104,7 +4169,7 @@
                 // 2 ** 7 - 1
                 if (value > 127)
                     return false;
-                return typeChecksExports.isInteger(value);
+                return isInteger(value);
             case SHORT:
                 // -(2 ** 15)
                 if (value < -32768)
@@ -4112,7 +4177,7 @@
                 // 2 ** 15 - 1
                 if (value > 32767)
                     return false;
-                return typeChecksExports.isInteger(value);
+                return isInteger(value);
             case INT:
                 // -(2 ** 31)
                 if (value < -2147483648)
@@ -4120,22 +4185,22 @@
                 // 2 ** 31 - 1
                 if (value > 2147483647)
                     return false;
-                return typeChecksExports.isInteger(value);
+                return isInteger(value);
             case UNSIGNED_BYTE:
                 // 2 ** 8 - 1
                 if (value > 255)
                     return false;
-                return typeChecksExports.isNonNegativeInteger(value);
+                return isNonNegativeInteger(value);
             case UNSIGNED_SHORT:
                 // 2 ** 16 - 1
                 if (value > 65535)
                     return false;
-                return typeChecksExports.isNonNegativeInteger(value);
+                return isNonNegativeInteger(value);
             case UNSIGNED_INT:
                 // 2 ** 32 - 1
                 if (value > 4294967295)
                     return false;
-                return typeChecksExports.isNonNegativeInteger(value);
+                return isNonNegativeInteger(value);
             default:
                 throw new Error("Unknown type ".concat(type));
         }
@@ -4276,7 +4341,7 @@
             if (!params) {
                 throw new Error('Error initing GPULayer: must pass params to GPULayer(composer, params).');
             }
-            if (!typeChecksExports.isObject(params)) {
+            if (!isObject$1(params)) {
                 throw new Error("Error initing GPULayer: must pass valid params object to GPULayer(composer, params), got ".concat(JSON.stringify(params), "."));
             }
             // Check params keys.
@@ -4291,7 +4356,7 @@
             this._composer = composer;
             this.name = name;
             // numComponents must be between 1 and 4.
-            if (!typeChecksExports.isPositiveInteger(numComponents) || numComponents > 4) {
+            if (!isPositiveInteger(numComponents) || numComponents > 4) {
                 throw new Error("Invalid numComponents: ".concat(JSON.stringify(numComponents), " for GPULayer \"").concat(name, "\", must be number in range [1-4]."));
             }
             this.numComponents = numComponents;
@@ -4357,7 +4422,7 @@
             this._glWrapT = gl[this._internalWrapY];
             // Num buffers is the number of states to store for this data.
             var numBuffers = params.numBuffers !== undefined ? params.numBuffers : 1;
-            if (!typeChecksExports.isPositiveInteger(numBuffers)) {
+            if (!isPositiveInteger(numBuffers)) {
                 throw new Error("Invalid numBuffers: ".concat(JSON.stringify(numBuffers), " for GPULayer \"").concat(name, "\", must be positive integer."));
             }
             this.numBuffers = numBuffers;
@@ -4387,7 +4452,7 @@
                             if (!params) {
                                 throw new Error('Error initing GPULayer: must pass params to GPULayer.initFromImageURL(composer, params).');
                             }
-                            if (!typeChecksExports.isObject(params)) {
+                            if (!isObject$1(params)) {
                                 throw new Error("Error initing GPULayer: must pass valid params object to GPULayer.initFromImageURL(composer, params), got ".concat(JSON.stringify(params), "."));
                             }
                             // Check params.
@@ -4397,7 +4462,7 @@
                             checkValidKeys(keys, validKeys, 'GPULayer.initFromImageURL(composer, params)', params.name);
                             checkRequiredKeys(keys, requiredKeys, 'GPULayer.initFromImageURL(composer, params)', params.name);
                             var url = params.url, name = params.name, filter = params.filter, wrapX = params.wrapX, wrapY = params.wrapY, type = params.type, format = params.format;
-                            if (!typeChecksExports.isString(url)) {
+                            if (!isString(url)) {
                                 throw new Error("Expected GPULayer.initFromImageURL params to have url of type string, got ".concat(url, " of type ").concat(typeof url, "."));
                             }
                             if (type && !isValidImageType(type)) {
@@ -4557,7 +4622,7 @@
             var _a = this, name = _a.name, numBuffers = _a.numBuffers, _composer = _a._composer, _glInternalFormat = _a._glInternalFormat, _glFormat = _a._glFormat, _glType = _a._glType, _glFilter = _a._glFilter, _glWrapS = _a._glWrapS, _glWrapT = _a._glWrapT, width = _a.width, height = _a.height;
             var gl = _composer.gl, _errorCallback = _composer._errorCallback;
             var validatedArrayOrImage = null;
-            if (typeChecksExports.isArray(arrayOrImage))
+            if (isArray(arrayOrImage))
                 validatedArrayOrImage = GPULayer.validateGPULayerArray(arrayOrImage, this);
             else if ((arrayOrImage === null || arrayOrImage === void 0 ? void 0 : arrayOrImage.constructor) === HTMLImageElement)
                 validatedArrayOrImage = arrayOrImage;
@@ -4744,7 +4809,7 @@
                     throw new Error("Invalid clearValue: ".concat(JSON.stringify(clearValue), " for GPULayer \"").concat(this.name, "\", expected ").concat(type, " or array of ").concat(type, " of length ").concat(numComponents, "."));
                 }
                 // Make deep copy if needed.
-                this._clearValue = typeChecksExports.isArray(clearValue) ? clearValue.slice() : clearValue;
+                this._clearValue = isArray(clearValue) ? clearValue.slice() : clearValue;
                 this._clearValueVec4 = undefined;
             },
             enumerable: false,
@@ -4759,7 +4824,7 @@
                 if (!_clearValueVec4) {
                     var clearValue = this.clearValue;
                     _clearValueVec4 = [];
-                    if (typeChecksExports.isFiniteNumber(clearValue)) {
+                    if (isFiniteNumber(clearValue)) {
                         _clearValueVec4.push(clearValue, clearValue, clearValue, clearValue);
                     }
                     else {
@@ -5219,8 +5284,8 @@
      * @private
      */
     GPULayer.calcGPULayerSize = function (size, name, verboseLogging) {
-        if (typeChecksExports.isNumber(size)) {
-            if (!typeChecksExports.isPositiveInteger(size)) {
+        if (isNumber(size)) {
+            if (!isPositiveInteger(size)) {
                 throw new Error("Invalid length: ".concat(JSON.stringify(size), " for GPULayer \"").concat(name, "\", must be positive integer."));
             }
             var length_1 = size;
@@ -5241,11 +5306,11 @@
             return { width: width_1, height: height_1, length: length_1 };
         }
         var width = size[0];
-        if (!typeChecksExports.isPositiveInteger(width)) {
+        if (!isPositiveInteger(width)) {
             throw new Error("Invalid width: ".concat(JSON.stringify(width), " for GPULayer \"").concat(name, "\", must be positive integer."));
         }
         var height = size[1];
-        if (!typeChecksExports.isPositiveInteger(height)) {
+        if (!isPositiveInteger(height)) {
             throw new Error("Invalid height: ".concat(JSON.stringify(height), " for GPULayer \"").concat(name, "\", must be positive integer."));
         }
         return { width: width, height: height };
@@ -6122,7 +6187,7 @@
             if (!params) {
                 throw new Error("Error initing GPUProgram: must pass params to GPUProgram(composer, params).");
             }
-            if (!typeChecksExports.isObject(params)) {
+            if (!isObject$1(params)) {
                 throw new Error("Error initing GPUProgram: must pass valid params object to GPUProgram(composer, params), got ".concat(JSON.stringify(params), "."));
             }
             // Check params keys.
@@ -6136,7 +6201,7 @@
             this._composer = composer;
             this.name = name;
             // Preprocess fragment shader source.
-            var fragmentShaderSource = typeChecksExports.isString(fragmentShader) ?
+            var fragmentShaderSource = isString(fragmentShader) ?
                 fragmentShader :
                 fragmentShader.join('\n');
             var _a = preprocessFragmentShader(fragmentShaderSource, composer.glslVersion, name), shaderSource = _a.shaderSource, samplerUniforms = _a.samplerUniforms, additionalSources = _a.additionalSources;
@@ -6337,28 +6402,28 @@
                 var uniform = gl.getUniform(program, location);
                 var badType = false;
                 if (type === BOOL_1D_UNIFORM || type === BOOL_2D_UNIFORM || type === BOOL_3D_UNIFORM || type === BOOL_4D_UNIFORM) {
-                    if (!typeChecksExports.isBoolean(uniform) && uniform.constructor !== Array) {
+                    if (!isBoolean(uniform) && uniform.constructor !== Array) {
                         badType = true;
                     }
                 }
                 else if (type === FLOAT_1D_UNIFORM || type === FLOAT_2D_UNIFORM || type === FLOAT_3D_UNIFORM || type === FLOAT_4D_UNIFORM) {
-                    if (!typeChecksExports.isFiniteNumber(uniform) && uniform.constructor !== Float32Array) {
+                    if (!isFiniteNumber(uniform) && uniform.constructor !== Float32Array) {
                         badType = true;
                     }
                 }
                 else if (type === INT_1D_UNIFORM || type === INT_2D_UNIFORM || type === INT_3D_UNIFORM || type === INT_4D_UNIFORM) {
-                    if (!typeChecksExports.isInteger(uniform) && uniform.constructor !== Int32Array) {
+                    if (!isInteger(uniform) && uniform.constructor !== Int32Array) {
                         badType = true;
                     }
                 }
                 else if (type === UINT_1D_UNIFORM || type === UINT_2D_UNIFORM || type === UINT_3D_UNIFORM || type === UINT_4D_UNIFORM) {
                     if (!isGLSL3) {
                         // GLSL1 does not have uint type, expect int instead.
-                        if (!typeChecksExports.isNonNegativeInteger(uniform) && uniform.constructor !== Int32Array) {
+                        if (!isNonNegativeInteger(uniform) && uniform.constructor !== Int32Array) {
                             badType = true;
                         }
                     }
-                    else if (!typeChecksExports.isNonNegativeInteger(uniform) && uniform.constructor !== Uint32Array) {
+                    else if (!isNonNegativeInteger(uniform) && uniform.constructor !== Uint32Array) {
                         badType = true;
                     }
                 }
@@ -6448,14 +6513,14 @@
             var uniform = _uniforms[name];
             if (!uniform) {
                 // Init uniform if needed.
-                _uniforms[name] = { location: new WeakMap(), value: typeChecksExports.isArray(value) ? value.slice() : value, type: type };
+                _uniforms[name] = { location: new WeakMap(), value: isArray(value) ? value.slice() : value, type: type };
                 return true;
             }
             var oldValue = uniform.value;
             // Update value with a deep copy of input.
-            uniform.value = typeChecksExports.isArray(value) ? value.slice() : value;
+            uniform.value = isArray(value) ? value.slice() : value;
             // Deep check if value has changed.
-            if (typeChecksExports.isArray(value)) {
+            if (isArray(value)) {
                 for (var i = 0, length_2 = value.length; i < length_2; i++) {
                     if (value[i] !== oldValue[i]) {
                         return true;
@@ -6476,7 +6541,7 @@
             var _b = this, _programs = _b._programs, _uniforms = _b._uniforms, _composer = _b._composer, _samplerUniformsIndices = _b._samplerUniformsIndices;
             var verboseLogging = _composer.verboseLogging, gl = _composer.gl;
             // Check that length of value is correct.
-            if (typeChecksExports.isArray(value)) {
+            if (isArray(value)) {
                 var length_3 = value.length;
                 if (length_3 > 4)
                     throw new Error("Invalid uniform value: [".concat(value.join(', '), "] passed to GPUProgram \"").concat(this.name, ", uniforms must be of type number[] with length <= 4, number, or boolean.\""));
@@ -6503,7 +6568,7 @@
                 return;
             // Cache user-defined sampler uniform values.
             var samplerUniform = _samplerUniformsIndices.find(function (uniform) { return uniform.name === name; });
-            if (samplerUniform && typeChecksExports.isInteger(value)) {
+            if (samplerUniform && isInteger(value)) {
                 samplerUniform.inputIndex = value;
             }
             if (verboseLogging)
@@ -6740,7 +6805,7 @@
     function addValueProgram$1(composer, params) {
         var type = params.type, value = params.value;
         var precision = params.precision || '';
-        var valueLength = typeChecksExports.isArray(value) ? value.length : 1;
+        var valueLength = isArray(value) ? value.length : 1;
         var valueType = glslTypeForType(type, valueLength);
         var numComponents = valueLength === 1 ? 4 : valueLength;
         var outputType = glslTypeForType(type, numComponents);
@@ -6777,7 +6842,7 @@
     function multiplyValueProgram$1(composer, params) {
         var type = params.type, value = params.value;
         var precision = params.precision || '';
-        var valueLength = typeChecksExports.isArray(value) ? value.length : 1;
+        var valueLength = isArray(value) ? value.length : 1;
         var valueType = glslTypeForType(type, valueLength);
         var numComponents = valueLength === 1 ? 4 : valueLength;
         var outputType = glslTypeForType(type, numComponents);
@@ -6814,7 +6879,7 @@
     function setValueProgram$1(composer, params) {
         var type = params.type, value = params.value;
         var precision = params.precision || '';
-        var valueLength = typeChecksExports.isArray(value) ? value.length : 1;
+        var valueLength = isArray(value) ? value.length : 1;
         var valueType = glslTypeForType(type, valueLength);
         var numComponents = valueLength === 1 ? 4 : valueLength;
         var outputType = glslTypeForType(type, numComponents);
@@ -7130,7 +7195,7 @@
             this.verboseLogging = false;
             this._numTicks = 0;
             // Check params.
-            var validKeys = ['canvas', 'context', 'contextID', 'contextAttributes', 'glslVersion', 'intPrecision', 'floatPrecision', 'clearValue', 'verboseLogging', 'errorCallback'];
+            var validKeys = ['canvas', 'context', 'contextID', 'contextAttributes', 'glslVersion', 'intPrecision', 'floatPrecision', 'clearValue', 'verboseLogging', 'errorCallback', 'autoPerformanceProfile'];
             var requiredKeys = ['canvas'];
             var keys = Object.keys(params);
             checkValidKeys(keys, validKeys, 'GPUComposer(params)');
@@ -7210,6 +7275,10 @@
             gl.bindBuffer(gl.ARRAY_BUFFER, null);
             if (params.clearValue !== undefined) {
                 this.clearValue = params.clearValue;
+            }
+            // Auto-performance profile setup.
+            if (params.autoPerformanceProfile !== undefined) {
+                this._autoProfileOptions = params.autoPerformanceProfile;
             }
             // Canvas setup.
             this.resize([canvas.clientWidth, canvas.clientHeight]);
@@ -7411,10 +7480,11 @@
          * @param dimensions - The new [width, height] to resize to.
          */
         GPUComposer.prototype.resize = function (dimensions) {
+            var _a;
             var canvas = this.canvas;
             var width = dimensions[0], height = dimensions[1];
-            if (!typeChecksExports.isNonNegativeInteger(width) || !typeChecksExports.isNonNegativeInteger(height)) {
-                if (!typeChecksExports.isArray(dimensions))
+            if (!isNonNegativeInteger(width) || !isNonNegativeInteger(height)) {
+                if (!isArray(dimensions))
                     throw new Error("Invalid dimensions parameter supplied to GPUComposer.resize(), expected dimensions array of length 2, got: ".concat(JSON.stringify(dimensions)));
                 else
                     throw new Error("Invalid dimensions parameter supplied to GPUComposer.resize(), expected positive integers, got: ".concat(width, ", ").concat(height));
@@ -7426,6 +7496,10 @@
             // Save dimensions.
             this._width = width;
             this._height = height;
+            // Performance monitoring hook for auto-profile
+            if ((_a = this._autoProfileOptions) === null || _a === void 0 ? void 0 : _a.onCanvasResize) {
+                this._autoProfileOptions.onCanvasResize(width, height);
+            }
         };
         /**
          * Set inputs and outputs in preparation for draw call.
@@ -7487,7 +7561,7 @@
             if (input === undefined) {
                 return [layer];
             }
-            if (typeChecksExports.isArray(input)) {
+            if (isArray(input)) {
                 // Return input with layer added if needed.
                 if (indexOfLayerInArray(layer, input) >= 0) {
                     return input;
@@ -7527,12 +7601,12 @@
                 gl.viewport(0, 0, _width, _height);
                 return;
             }
-            var outputArray = (typeChecksExports.isArray(output) ? output : [output]);
+            var outputArray = (isArray(output) ? output : [output]);
             for (var i = 0, numOutputs = outputArray.length; i < numOutputs; i++) {
                 var outputLayer = outputArray[i];
                 // Check if output is same as one of input layers.
                 if (input && ((input === output || input.layer === output) ||
-                    (typeChecksExports.isArray(input) && indexOfLayerInArray(outputLayer, input) >= 0))) {
+                    (isArray(input) && indexOfLayerInArray(outputLayer, input) >= 0))) {
                     if (outputLayer.numBuffers === 1) {
                         throw new Error("Cannot use same buffer \"".concat(outputLayer.name, "\" for input and output of a program. Try increasing the number of buffers in your output layer to at least 2 so you can render to nextState using currentState as an input."));
                     }
@@ -7646,7 +7720,7 @@
             this._setVertexAttribute(program, 'a_gpuio_uv', 2, programName);
         };
         GPUComposer.prototype._widthHeightForOutput = function (programName, output) {
-            if (typeChecksExports.isArray(output)) {
+            if (isArray(output)) {
                 // Check that all outputs have the same size.
                 var firstOutput = output[0];
                 var width_1 = firstOutput ? firstOutput.width : this._width;
@@ -7668,7 +7742,7 @@
          * This is required when attempting to draw to multiple outputs using GLSL1.
          */
         GPUComposer.prototype._iterateOverOutputsIfNeeded = function (params, methodName) {
-            if (params.output && typeChecksExports.isArray(params.output) && this.glslVersion === GLSL1) {
+            if (params.output && isArray(params.output) && this.glslVersion === GLSL1) {
                 for (var i = 0, numOutputs = params.output.length; i < numOutputs; i++) {
                     this[methodName](__assign(__assign({}, params), { program: i === 0 ? params.program : params.program._childPrograms[i - 1], output: params.output[i] }));
                 }
@@ -7754,7 +7828,7 @@
             this._setBlendMode(params.blendAlpha);
             if (params.edges) {
                 var edges = params.edges;
-                if (!typeChecksExports.isArray(edges))
+                if (!isArray(edges))
                     edges = [edges];
                 for (var i = 0, numEdges = edges.length; i < numEdges; i++) {
                     // TODO: do this in one draw call.
@@ -8618,7 +8692,7 @@
                     throw new Error("Invalid clearValue: ".concat(JSON.stringify(clearValue), " for GPUComposer, expected ").concat(type, " or array of ").concat(type, " of length ").concat(numComponents, "."));
                 }
                 // Make deep copy if needed.
-                this._clearValue = typeChecksExports.isArray(clearValue) ? clearValue.slice() : clearValue;
+                this._clearValue = isArray(clearValue) ? clearValue.slice() : clearValue;
                 this._clearValueVec4 = undefined;
             },
             enumerable: false,
@@ -8633,7 +8707,7 @@
                 if (!_clearValueVec4) {
                     var clearValue = this.clearValue;
                     _clearValueVec4 = [];
-                    if (typeChecksExports.isFiniteNumber(clearValue)) {
+                    if (isFiniteNumber(clearValue)) {
                         _clearValueVec4.push(clearValue, clearValue, clearValue, clearValue);
                     }
                     else {
@@ -8737,8 +8811,9 @@
          * @returns An Object containing the current fps of your application and the number of times tick() has been called.
          */
         GPUComposer.prototype.tick = function () {
+            var _a;
             this._numTicks += 1;
-            var _a = this, _lastTickTime = _a._lastTickTime, _lastTickFPS = _a._lastTickFPS;
+            var _b = this, _lastTickTime = _b._lastTickTime, _lastTickFPS = _b._lastTickFPS;
             var currentTime = performance.now();
             this._lastTickTime = currentTime;
             if (!_lastTickTime) {
@@ -8751,6 +8826,16 @@
             var factor = 0.9;
             var fps = Number.parseFloat((factor * _lastTickFPS + (1 - factor) * currentFPS).toFixed(1));
             this._lastTickFPS = fps;
+            // Auto-performance profiling hook
+            if ((_a = this._autoProfileOptions) === null || _a === void 0 ? void 0 : _a.onPerformanceUpdate) {
+                this._autoProfileOptions.onPerformanceUpdate({
+                    fps: fps,
+                    numTicks: this._numTicks,
+                    timestamp: currentTime,
+                    canvasWidth: this._width,
+                    canvasHeight: this._height,
+                });
+            }
             return {
                 fps: fps,
                 numTicks: this._numTicks,
@@ -8895,7 +8980,7 @@
             if (!params) {
                 throw new Error('Error initing GPUIndexBuffer: must pass params to GPUIndexBuffer(composer, params).');
             }
-            if (!typeChecksExports.isObject(params)) {
+            if (!isObject$1(params)) {
                 throw new Error("Error initing GPUIndexBuffer: must pass valid params object to GPUIndexBuffer(composer, params), got ".concat(JSON.stringify(params), "."));
             }
             // Check params.
@@ -8959,6 +9044,271 @@
         };
         return GPUIndexBuffer;
     }());
+
+    /**
+     * Auto-performance profiling module for GPU-IO
+     * Ported from fluid-background.js with TypeScript types and dependency injection
+     */
+    // English mapping for external consumers:
+    // 'alto' = 'high', 'medio' = 'medium', 'bajo' = 'low', 'minimo' = 'minimal'
+    var QUALITY_PRESET_MAPPING = {
+        high: 'alto',
+        medium: 'medio',
+        low: 'bajo',
+        minimal: 'minimo',
+    };
+    var QUALITY_PRESETS = {
+        alto: {
+            id: 'alto',
+            particleDensity: 0.1,
+            maxParticles: 100000,
+            particleLifetime: 1000,
+            numJacobiSteps: 3,
+            numRenderSteps: 3,
+            velocityScaleFactor: 8,
+            maxVelocity: 30,
+            trailLength: 18,
+            touchForceScale: 2,
+            frameBudget: 22
+        },
+        medio: {
+            id: 'medio',
+            particleDensity: 0.07,
+            maxParticles: 70000,
+            particleLifetime: 900,
+            numJacobiSteps: 3,
+            numRenderSteps: 2,
+            velocityScaleFactor: 10,
+            maxVelocity: 26,
+            trailLength: 14,
+            touchForceScale: 1.8,
+            frameBudget: 28
+        },
+        bajo: {
+            id: 'bajo',
+            particleDensity: 0.045,
+            maxParticles: 45000,
+            particleLifetime: 800,
+            numJacobiSteps: 2,
+            numRenderSteps: 1,
+            velocityScaleFactor: 12,
+            maxVelocity: 22,
+            trailLength: 12,
+            touchForceScale: 1.5,
+            frameBudget: 32
+        },
+        minimo: {
+            id: 'minimo',
+            particleDensity: 0.03,
+            maxParticles: 25000,
+            particleLifetime: 700,
+            numJacobiSteps: 1,
+            numRenderSteps: 1,
+            velocityScaleFactor: 14,
+            maxVelocity: 18,
+            trailLength: 10,
+            touchForceScale: 1.2,
+            frameBudget: 36
+        }
+    };
+    var QUALITY_SEQUENCE = ['alto', 'medio', 'bajo', 'minimo'];
+    /**
+     * Get the next lower quality preset ID in the sequence
+     */
+    function getNextQualityId(id) {
+        var index = QUALITY_SEQUENCE.indexOf(id);
+        if (index === -1 || index >= QUALITY_SEQUENCE.length - 1) {
+            return null;
+        }
+        return QUALITY_SEQUENCE[index + 1];
+    }
+    /**
+     * Check if user prefers reduced motion (SSR-safe)
+     */
+    function prefersReducedMotion(env) {
+        var window = (env === null || env === void 0 ? void 0 : env.window) || (typeof globalThis !== 'undefined' ? globalThis.window : undefined);
+        if (!window || !window.matchMedia) {
+            return false;
+        }
+        try {
+            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+        catch (error) {
+            return false;
+        }
+    }
+    /**
+     * Detect optimal quality profile based on device capabilities
+     */
+    function detectQualityProfile(capabilities, env) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+        // Check for reduced motion preference first
+        if ((_a = capabilities.prefersReducedMotion) !== null && _a !== void 0 ? _a : prefersReducedMotion(env)) {
+            return 'minimo';
+        }
+        // Check for data saver mode
+        var navigator = (env === null || env === void 0 ? void 0 : env.navigator) || (typeof globalThis !== 'undefined' ? globalThis.navigator : undefined);
+        var connection = (navigator === null || navigator === void 0 ? void 0 : navigator.connection) || (navigator === null || navigator === void 0 ? void 0 : navigator.mozConnection) || (navigator === null || navigator === void 0 ? void 0 : navigator.webkitConnection);
+        if ((_b = capabilities.saveData) !== null && _b !== void 0 ? _b : (connection && connection.saveData)) {
+            return 'bajo';
+        }
+        // Extract device metrics with fallbacks
+        var deviceMemory = (_c = capabilities.deviceMemory) !== null && _c !== void 0 ? _c : ((navigator === null || navigator === void 0 ? void 0 : navigator.deviceMemory) || 0);
+        var cores = (_d = capabilities.hardwareConcurrency) !== null && _d !== void 0 ? _d : ((navigator === null || navigator === void 0 ? void 0 : navigator.hardwareConcurrency) || 0);
+        var pixelRatio = (_e = capabilities.devicePixelRatio) !== null && _e !== void 0 ? _e : (((_f = env === null || env === void 0 ? void 0 : env.window) === null || _f === void 0 ? void 0 : _f.devicePixelRatio) || 1);
+        var screenWidth = (_g = capabilities.screenWidth) !== null && _g !== void 0 ? _g : (((_h = env === null || env === void 0 ? void 0 : env.window) === null || _h === void 0 ? void 0 : _h.innerWidth) || 0);
+        var screenHeight = (_j = capabilities.screenHeight) !== null && _j !== void 0 ? _j : (((_k = env === null || env === void 0 ? void 0 : env.window) === null || _k === void 0 ? void 0 : _k.innerHeight) || 0);
+        var screenArea = screenWidth * screenHeight;
+        var score = 0;
+        // WebGL2 support
+        if (capabilities.supportsWebGL2) {
+            score += 1;
+        }
+        else {
+            score -= 2;
+        }
+        // Device memory scoring
+        if (deviceMemory >= 8) {
+            score += 2;
+        }
+        else if (deviceMemory >= 4) {
+            score += 1;
+        }
+        else if (deviceMemory > 0) {
+            score -= 1;
+        }
+        else {
+            score -= 1; // Unknown memory
+        }
+        // CPU cores scoring
+        if (cores >= 8) {
+            score += 2;
+        }
+        else if (cores >= 4) {
+            score += 1;
+        }
+        else if (cores > 0) {
+            score -= 1;
+        }
+        else {
+            score -= 1; // Unknown cores
+        }
+        // High pixel ratio penalty
+        if (pixelRatio > 2.5) {
+            score -= 1;
+        }
+        // Large screen penalty
+        if (screenArea > 2500000) {
+            score -= 1;
+        }
+        // Low memory penalty
+        if (deviceMemory && deviceMemory <= 2) {
+            score -= 1;
+        }
+        // Map score to quality preset
+        if (score <= -1) {
+            return 'bajo';
+        }
+        if (score <= 1) {
+            return 'medio';
+        }
+        return 'alto';
+    }
+    /**
+     * Create fluid background with auto-performance profiling
+     * This is a simplified version focused on the profiling logic
+     */
+    function createFluidBackground(gpuioAPI, // Will be properly typed when integrated with GPUComposer
+    options) {
+        var _a, _b;
+        if (options === void 0) { options = {}; }
+        var profileId = options.profileId, onRequestDowngrade = options.onRequestDowngrade, deviceCapabilities = options.deviceCapabilities;
+        // Detect capabilities if not provided
+        var capabilities = deviceCapabilities || {
+            supportsWebGL2: typeof (gpuioAPI === null || gpuioAPI === void 0 ? void 0 : gpuioAPI.isWebGL2Supported) === 'function' ? gpuioAPI.isWebGL2Supported() : true,
+        };
+        // Select quality profile
+        var selectedProfileId = QUALITY_PRESETS[profileId]
+            ? profileId
+            : detectQualityProfile(capabilities);
+        QUALITY_PRESETS[selectedProfileId] || QUALITY_PRESETS.minimo;
+        // Log selected profile in development
+        if (typeof globalThis !== 'undefined' &&
+            (typeof globalThis.process === 'undefined' ||
+                ((_b = (_a = globalThis.process) === null || _a === void 0 ? void 0 : _a.env) === null || _b === void 0 ? void 0 : _b.NODE_ENV) !== 'production')) {
+            console.info("Auto-performance profile selected: \"".concat(selectedProfileId, "\""));
+        }
+        // Setup cleanup callbacks for media listeners
+        var cleanupCallbacks = [];
+        // Monitor reduced motion changes
+        var setupMediaListener = function (query, handler) {
+            if (!query)
+                return;
+            if (typeof query.addEventListener === 'function') {
+                query.addEventListener('change', handler);
+                cleanupCallbacks.push(function () { return query.removeEventListener('change', handler); });
+            }
+            else if (typeof query.addListener === 'function') {
+                query.addListener(handler);
+                cleanupCallbacks.push(function () { return query.removeListener(handler); });
+            }
+        };
+        // Setup reduced motion monitoring
+        var window = typeof globalThis !== 'undefined' ? globalThis.window : undefined;
+        var reduceMotionQuery = (window === null || window === void 0 ? void 0 : window.matchMedia) ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+        setupMediaListener(reduceMotionQuery, function (event) {
+            if (event.matches && onRequestDowngrade) {
+                onRequestDowngrade('minimo');
+            }
+        });
+        // Setup connection monitoring
+        var navigator = typeof globalThis !== 'undefined' ? globalThis.navigator : undefined;
+        var connection = (navigator === null || navigator === void 0 ? void 0 : navigator.connection) || (navigator === null || navigator === void 0 ? void 0 : navigator.mozConnection) || (navigator === null || navigator === void 0 ? void 0 : navigator.webkitConnection);
+        var handleConnectionChange = function () {
+            if ((connection === null || connection === void 0 ? void 0 : connection.saveData) && onRequestDowngrade) {
+                var targetProfile = selectedProfileId === 'minimo' ? 'minimo' : 'bajo';
+                onRequestDowngrade(targetProfile);
+            }
+        };
+        if (connection) {
+            handleConnectionChange();
+            if (typeof connection.addEventListener === 'function') {
+                connection.addEventListener('change', handleConnectionChange);
+                cleanupCallbacks.push(function () { return connection.removeEventListener('change', handleConnectionChange); });
+            }
+        }
+        return {
+            dispose: function () {
+                cleanupCallbacks.forEach(function (fn) { return fn(); });
+                cleanupCallbacks.length = 0;
+            },
+            currentProfile: selectedProfileId
+        };
+    }
+    /**
+     * Utility to translate quality preset properties to composer configuration
+     */
+    function translatePresetToConfig(preset) {
+        return {
+            particleCount: preset.maxParticles,
+            jacobiIterations: preset.numJacobiSteps,
+            renderPasses: preset.numRenderSteps,
+            velocityScale: preset.velocityScaleFactor,
+            trailFadeRate: 1 / preset.trailLength,
+        };
+    }
+
+    var autoProfile = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        QUALITY_PRESETS: QUALITY_PRESETS,
+        QUALITY_PRESET_MAPPING: QUALITY_PRESET_MAPPING,
+        QUALITY_SEQUENCE: QUALITY_SEQUENCE,
+        createFluidBackground: createFluidBackground,
+        detectQualityProfile: detectQualityProfile,
+        getNextQualityId: getNextQualityId,
+        prefersReducedMotion: prefersReducedMotion,
+        translatePresetToConfig: translatePresetToConfig
+    });
 
     // These exports are only used for testing.
     /**
@@ -9061,6 +9411,7 @@
     exports.isWebGL2 = isWebGL2;
     exports.isWebGL2Supported = isWebGL2Supported;
     exports.multiplyValueProgram = multiplyValueProgram;
+    exports.performance = autoProfile;
     exports.renderAmplitudeProgram = renderAmplitudeProgram;
     exports.renderRGBProgram = renderRGBProgram;
     exports.renderSignedAmplitudeProgram = renderSignedAmplitudeProgram;

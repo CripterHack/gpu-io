@@ -10,6 +10,7 @@ import * as extensions from './extensions';
 import * as polyfills from './polyfills';
 import * as conversions from './conversions';
 import * as Programs from './Programs';
+import * as performance from './performance/autoProfile';
 
 // These exports are only used for testing.
 /**
@@ -82,6 +83,7 @@ export {
 	setColorProgram,
 	zeroProgram,
 	renderRGBProgram,
+	performance,
 	_testing,
 }
 export * from './constants';
