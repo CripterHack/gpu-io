@@ -456,7 +456,7 @@ Set a quality preset for performance optimization.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `presetId` | [`QualityPresetId`](../modules/performance.md#qualitypresetid) | The quality preset ID ('alto', 'medio', 'bajo', 'minimo') |
+| `presetId` | [`QualityPresetId`](../modules/performance.md#qualitypresetid) | The quality preset ID ('high', 'medium', 'low', 'minimal') |
 
 #### Returns
 

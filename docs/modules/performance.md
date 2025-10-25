@@ -33,7 +33,7 @@
 
 ### QualityPresetId
 
-Ƭ **QualityPresetId**: ``"alto"`` \| ``"medio"`` \| ``"bajo"`` \| ``"minimo"``
+Ƭ **QualityPresetId**: ``"high"`` \| ``"medium"`` \| ``"low"`` \| ``"minimal"``
 
 ## Variables
 
@@ -45,10 +45,10 @@
 
 | Name | Type |
 | :------ | :------ |
-| `high` | ``"alto"`` |
-| `medium` | ``"medio"`` |
-| `low` | ``"bajo"`` |
-| `minimal` | ``"minimo"`` |
+| `high` | ``"high"`` |
+| `medium` | ``"medium"`` |
+| `low` | ``"low"`` |
+| `minimal` | ``"minimal"`` |
 
 ___
 
