@@ -18,21 +18,21 @@ export interface QualityPreset {
   readonly frameBudget: number;
 }
 
-// Quality preset IDs - keeping Spanish names internally but documenting English mapping
-export type QualityPresetId = 'alto' | 'medio' | 'bajo' | 'minimo';
+// Quality preset IDs
+export type QualityPresetId = 'high' | 'medium' | 'low' | 'minimal';
 
 // English mapping for external consumers:
-// 'alto' = 'high', 'medio' = 'medium', 'bajo' = 'low', 'minimo' = 'minimal'
+// 'high' = 'high', 'medium' = 'medium', 'low' = 'low', 'minimal' = 'minimal'
 export const QUALITY_PRESET_MAPPING = {
-  high: 'alto' as const,
-  medium: 'medio' as const,
-  low: 'bajo' as const,
-  minimal: 'minimo' as const,
+  high: 'high' as const,
+  medium: 'medium' as const,
+  low: 'low' as const,
+  minimal: 'minimal' as const,
 } as const;
 
 export const QUALITY_PRESETS: Record<QualityPresetId, QualityPreset> = {
-  alto: {
-    id: 'alto',
+  high: {
+    id: 'high',
     particleDensity: 0.1,
     maxParticles: 100000,
     particleLifetime: 1000,
@@ -44,8 +44,8 @@ export const QUALITY_PRESETS: Record<QualityPresetId, QualityPreset> = {
     touchForceScale: 2,
     frameBudget: 22
   },
-  medio: {
-    id: 'medio',
+  medium: {
+    id: 'medium',
     particleDensity: 0.07,
     maxParticles: 70000,
     particleLifetime: 900,
@@ -57,8 +57,8 @@ export const QUALITY_PRESETS: Record<QualityPresetId, QualityPreset> = {
     touchForceScale: 1.8,
     frameBudget: 28
   },
-  bajo: {
-    id: 'bajo',
+  low: {
+    id: 'low',
     particleDensity: 0.045,
     maxParticles: 45000,
     particleLifetime: 800,
@@ -70,8 +70,8 @@ export const QUALITY_PRESETS: Record<QualityPresetId, QualityPreset> = {
     touchForceScale: 1.5,
     frameBudget: 32
   },
-  minimo: {
-    id: 'minimo',
+  minimal: {
+    id: 'minimal',
     particleDensity: 0.03,
     maxParticles: 25000,
     particleLifetime: 700,
@@ -85,7 +85,7 @@ export const QUALITY_PRESETS: Record<QualityPresetId, QualityPreset> = {
   }
 };
 
-export const QUALITY_SEQUENCE: QualityPresetId[] = ['alto', 'medio', 'bajo', 'minimo'];
+export const QUALITY_SEQUENCE: QualityPresetId[] = ['high', 'medium', 'low', 'minimal'];
 
 // Auto-profile options interface
 export interface AutoProfileOptions {
@@ -192,7 +192,7 @@ export function detectQualityProfile(
 ): QualityPresetId {
   // Check for reduced motion preference first
   if (capabilities.prefersReducedMotion ?? prefersReducedMotion(env)) {
-    return 'minimo';
+    return 'minimal';
   }
 
   // Check for data saver mode
@@ -200,7 +200,7 @@ export function detectQualityProfile(
   const connection = (navigator as any)?.connection || (navigator as any)?.mozConnection || (navigator as any)?.webkitConnection;
   
   if (capabilities.saveData ?? (connection && connection.saveData)) {
-    return 'bajo';
+    return 'low';
   }
 
   // Extract device metrics with fallbacks
@@ -259,12 +259,12 @@ export function detectQualityProfile(
 
   // Map score to quality preset
   if (score <= -1) {
-    return 'bajo';
+    return 'low';
   }
-  if (score <= 1) {
-    return 'medio';
+  if (score <= 2) {
+    return 'medium';
   }
-  return 'alto';
+  return 'high';
 }
 
 /**
@@ -287,7 +287,7 @@ export function createFluidBackground(
     ? profileId as QualityPresetId 
     : detectQualityProfile(capabilities);
 
-  const quality = QUALITY_PRESETS[selectedProfileId] || QUALITY_PRESETS.minimo;
+  const quality = QUALITY_PRESETS[selectedProfileId] || QUALITY_PRESETS.minimal;
 
   // Log selected profile in development
   if (typeof globalThis !== 'undefined' && 
@@ -321,7 +321,7 @@ export function createFluidBackground(
   
   setupMediaListener(reduceMotionQuery, (event) => {
     if (event.matches && onRequestDowngrade) {
-      onRequestDowngrade('minimo');
+      onRequestDowngrade('minimal');
     }
   });
 
@@ -331,7 +331,7 @@ export function createFluidBackground(
   
   const handleConnectionChange = () => {
     if (connection?.saveData && onRequestDowngrade) {
-      const targetProfile = selectedProfileId === 'minimo' ? 'minimo' : 'bajo';
+      const targetProfile = selectedProfileId === 'minimal' ? 'minimal' : 'low';
       onRequestDowngrade(targetProfile);
     }
   };

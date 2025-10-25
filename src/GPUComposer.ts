@@ -2242,7 +2242,7 @@ export class GPUComposer {
 
 	/**
 	 * Set a quality preset for performance optimization.
-	 * @param presetId - The quality preset ID ('alto', 'medio', 'bajo', 'minimo')
+	 * @param presetId - The quality preset ID ('high', 'medium', 'low', 'minimal')
 	 */
 	setQualityPreset(presetId: QualityPresetId) {
 		if (!this._performanceAdapter) {
