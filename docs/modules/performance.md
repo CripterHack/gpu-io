@@ -66,15 +66,16 @@ ___
 
 ### getNextQualityId
 
-▸ **getNextQualityId**(`id`): [`QualityPresetId`](performance.md#qualitypresetid) \| ``null``
+▸ **getNextQualityId**(`id`, `direction?`): [`QualityPresetId`](performance.md#qualitypresetid) \| ``null``
 
 Get the next lower quality preset ID in the sequence
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `id` | [`QualityPresetId`](performance.md#qualitypresetid) |
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `id` | [`QualityPresetId`](performance.md#qualitypresetid) | `undefined` |
+| `direction` | ``"up"`` \| ``"down"`` | `'down'` |
 
 #### Returns
 

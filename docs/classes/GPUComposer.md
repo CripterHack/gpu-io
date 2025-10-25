@@ -31,6 +31,10 @@
 - [resetThreeState](GPUComposer.md#resetthreestate)
 - [savePNG](GPUComposer.md#savepng)
 - [tick](GPUComposer.md#tick)
+- [setQualityPreset](GPUComposer.md#setqualitypreset)
+- [getCurrentQualityPreset](GPUComposer.md#getcurrentqualitypreset)
+- [resetPerformanceConfig](GPUComposer.md#resetperformanceconfig)
+- [setPerformanceDebugLogging](GPUComposer.md#setperformancedebuglogging)
 - [dispose](GPUComposer.md#dispose)
 
 ### Constructors
@@ -439,6 +443,68 @@ An Object containing the current fps of your application and the number of times
 | :------ | :------ |
 | `fps` | `number` |
 | `numTicks` | `number` |
+
+___
+
+### setQualityPreset
+
+▸ **setQualityPreset**(`presetId`): `void`
+
+Set a quality preset for performance optimization.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `presetId` | [`QualityPresetId`](../modules/performance.md#qualitypresetid) | The quality preset ID ('alto', 'medio', 'bajo', 'minimo') |
+
+#### Returns
+
+`void`
+
+___
+
+### getCurrentQualityPreset
+
+▸ **getCurrentQualityPreset**(): ``null`` \| [`QualityPreset`](../interfaces/performance.QualityPreset.md)
+
+Get the current quality preset.
+
+#### Returns
+
+``null`` \| [`QualityPreset`](../interfaces/performance.QualityPreset.md)
+
+The current quality preset or null if not set
+
+___
+
+### resetPerformanceConfig
+
+▸ **resetPerformanceConfig**(): `void`
+
+Reset performance configuration to original values.
+
+#### Returns
+
+`void`
+
+___
+
+### setPerformanceDebugLogging
+
+▸ **setPerformanceDebugLogging**(`enabled`): `void`
+
+Enable or disable debug logging for performance events.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `enabled` | `boolean` | Whether to enable debug logging |
+
+#### Returns
+
+`void`
 
 ___
 

@@ -9,6 +9,8 @@
 ### Properties
 
 - [profileId](performance.AutoProfileOptions.md#profileid)
+- [targetFPS](performance.AutoProfileOptions.md#targetfps)
+- [debugLogging](performance.AutoProfileOptions.md#debuglogging)
 - [onRequestDowngrade](performance.AutoProfileOptions.md#onrequestdowngrade)
 - [deviceCapabilities](performance.AutoProfileOptions.md#devicecapabilities)
 - [onPerformanceUpdate](performance.AutoProfileOptions.md#onperformanceupdate)
@@ -21,6 +23,22 @@
 • `Optional` **profileId**: [`QualityPresetId`](../modules/performance.md#qualitypresetid)
 
 Override automatic detection with specific profile
+
+___
+
+### targetFPS
+
+• `Optional` **targetFPS**: `number`
+
+Target FPS for performance monitoring (default: 60)
+
+___
+
+### debugLogging
+
+• `Optional` **debugLogging**: `boolean`
+
+Enable debug logging for performance changes
 
 ___
 
