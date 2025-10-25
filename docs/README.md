@@ -84,6 +84,10 @@ gpu-io
 - [getVertexShaderMediumpPrecision](README.md#getvertexshadermediumpprecision)
 - [getFragmentShaderMediumpPrecision](README.md#getfragmentshadermediumpprecision)
 
+### Namespaces
+
+- [performance](modules/performance.md)
+
 ## Variables
 
 ### HALF\_FLOAT

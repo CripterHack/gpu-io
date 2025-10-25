@@ -306,6 +306,230 @@ function makeTable(testFunction) {
 	});
 }
 
+// Performance testing functionality
+function addPerformanceTests() {
+	const performanceSection = document.createElement('div');
+	performanceSection.id = 'performance-tests';
+	performanceSection.innerHTML = `
+		<h2>Performance Auto-Profile Tests</h2>
+		<div id="performance-info">
+			<p>Testing fluid background performance with different quality presets...</p>
+			<div id="performance-controls">
+				<button id="run-performance-test">Run Performance Test</button>
+				<button id="run-throttled-test">Run Throttled Test</button>
+				<select id="preset-selector">
+					<option value="auto">Auto-detect</option>
+					<option value="high">High (High)</option>
+					<option value="medium">Medium (Medium)</option>
+					<option value="low">Low (Low)</option>
+					<option value="minimal">Minimal (Minimal)</option>
+				</select>
+			</div>
+			<div id="performance-results"></div>
+		</div>
+	`;
+	document.getElementById('output').appendChild(performanceSection);
+
+	// Performance test implementation
+	let currentTest = null;
+	let frameCount = 0;
+	let startTime = 0;
+	let throttleActive = false;
+
+	// Synthetic throttling using requestAnimationFrame wrapper
+	function createThrottledRAF(throttleFactor = 0.5) {
+		let lastFrame = 0;
+		return function(callback) {
+			const now = performance.now();
+			const elapsed = now - lastFrame;
+			const targetInterval = (1000 / 60) / throttleFactor; // Slow down frame rate
+			
+			if (elapsed >= targetInterval) {
+				lastFrame = now;
+				return requestAnimationFrame(callback);
+			} else {
+				return setTimeout(() => requestAnimationFrame(callback), targetInterval - elapsed);
+			}
+		};
+	}
+
+	function runPerformanceTest(presetId = 'auto', useThrottling = false) {
+		const resultsDiv = document.getElementById('performance-results');
+		resultsDiv.innerHTML = '<p>Running performance test...</p>';
+
+		try {
+			// Clean up previous test
+			if (currentTest) {
+				currentTest.dispose();
+			}
+
+			// Create test canvas
+			const canvas = document.createElement('canvas');
+			canvas.width = 800;
+			canvas.height = 600;
+			canvas.style.border = '1px solid #ccc';
+			canvas.style.display = 'block';
+			canvas.style.margin = '10px 0';
+
+			// Performance metrics collection
+			const metrics = {
+				frames: [],
+				avgFPS: 0,
+				minFPS: Infinity,
+				maxFPS: 0,
+				preset: presetId,
+				throttled: useThrottling
+			};
+
+			// Setup performance monitoring
+			let animationId;
+			frameCount = 0;
+			startTime = performance.now();
+
+			const originalRAF = window.requestAnimationFrame;
+			if (useThrottling) {
+				window.requestAnimationFrame = createThrottledRAF(0.3); // Heavy throttling
+			}
+
+			// Create fluid background with performance monitoring
+			const options = {
+				targetFPS: 60,
+				debugLogging: true,
+				onPerformanceUpdate: (perfMetrics) => {
+					metrics.frames.push({
+						fps: perfMetrics.fps,
+						timestamp: perfMetrics.timestamp,
+						numTicks: perfMetrics.numTicks
+					});
+				}
+			};
+
+			if (presetId !== 'auto') {
+				options.profileId = presetId;
+			}
+
+			// Use GPUIO performance module
+			if (GPUIO.performance && GPUIO.performance.createFluidBackground) {
+				currentTest = GPUIO.performance.createFluidBackground(GPUIO, options);
+			} else {
+				// Fallback: create basic GPUComposer for testing
+				currentTest = new GPUIO.GPUComposer({ 
+					canvas,
+					autoPerformanceProfile: options
+				});
+			}
+
+			// Animation loop for metrics collection
+			function animate() {
+				frameCount++;
+				const now = performance.now();
+				const elapsed = now - startTime;
+
+				if (elapsed >= 1000) { // Collect data for 1 second intervals
+					const fps = (frameCount * 1000) / elapsed;
+					metrics.avgFPS = (metrics.avgFPS + fps) / 2;
+					metrics.minFPS = Math.min(metrics.minFPS, fps);
+					metrics.maxFPS = Math.max(metrics.maxFPS, fps);
+					
+					frameCount = 0;
+					startTime = now;
+				}
+
+				// Run test for 5 seconds
+				if (now - startTime < 5000) {
+					animationId = requestAnimationFrame(animate);
+				} else {
+					// Test complete
+					window.requestAnimationFrame = originalRAF; // Restore original RAF
+					
+					// Display results
+					const currentPreset = currentTest.getCurrentQualityPreset ? 
+						currentTest.getCurrentQualityPreset() : 
+						{ id: presetId };
+					
+					resultsDiv.innerHTML = `
+						<h3>Performance Test Results</h3>
+						<p><strong>Preset:</strong> ${currentPreset ? currentPreset.id : 'Unknown'}</p>
+						<p><strong>Throttled:</strong> ${useThrottling ? 'Yes' : 'No'}</p>
+						<p><strong>Average FPS:</strong> ${metrics.avgFPS.toFixed(2)}</p>
+						<p><strong>Min FPS:</strong> ${metrics.minFPS.toFixed(2)}</p>
+						<p><strong>Max FPS:</strong> ${metrics.maxFPS.toFixed(2)}</p>
+						<p><strong>Frame Samples:</strong> ${metrics.frames.length}</p>
+						<canvas id="performance-chart" width="400" height="200" style="border: 1px solid #ddd;"></canvas>
+					`;
+
+					// Draw simple FPS chart
+					drawFPSChart(metrics.frames);
+				}
+			}
+
+			animate();
+
+		} catch (error) {
+			resultsDiv.innerHTML = `<p style="color: red;">Error running performance test: ${error.message}</p>`;
+			console.error('Performance test error:', error);
+		}
+	}
+
+	function drawFPSChart(frames) {
+		const canvas = document.getElementById('performance-chart');
+		if (!canvas || frames.length === 0) return;
+
+		const ctx = canvas.getContext('2d');
+		const width = canvas.width;
+		const height = canvas.height;
+
+		// Clear canvas
+		ctx.clearRect(0, 0, width, height);
+
+		// Find FPS range
+		const fpsList = frames.map(f => f.fps);
+		const minFPS = Math.min(...fpsList);
+		const maxFPS = Math.max(...fpsList);
+		const fpsRange = maxFPS - minFPS || 1;
+
+		// Draw FPS line
+		ctx.strokeStyle = '#007acc';
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+
+		frames.forEach((frame, index) => {
+			const x = (index / (frames.length - 1)) * width;
+			const y = height - ((frame.fps - minFPS) / fpsRange) * height;
+			
+			if (index === 0) {
+				ctx.moveTo(x, y);
+			} else {
+				ctx.lineTo(x, y);
+			}
+		});
+
+		ctx.stroke();
+
+		// Draw labels
+		ctx.fillStyle = '#333';
+		ctx.font = '12px Arial';
+		ctx.fillText(`Max: ${maxFPS.toFixed(1)} FPS`, 10, 20);
+		ctx.fillText(`Min: ${minFPS.toFixed(1)} FPS`, 10, height - 10);
+	}
+
+	// Event listeners
+	document.getElementById('run-performance-test').addEventListener('click', () => {
+		const preset = document.getElementById('preset-selector').value;
+		runPerformanceTest(preset, false);
+	});
+
+	document.getElementById('run-throttled-test').addEventListener('click', () => {
+		const preset = document.getElementById('preset-selector').value;
+		runPerformanceTest(preset, true);
+	});
+}
+
+// Add performance tests to the page
+if (GPUIO.performance) {
+	addPerformanceTests();
+}
+
 const pending = document.getElementsByClassName('pending');
 
 for (const el of pending) {

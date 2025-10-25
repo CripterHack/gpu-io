@@ -70,6 +70,16 @@ import { checkRequiredKeys, checkValidKeys, isValidClearValue } from './checks';
 import { bindFrameBuffer } from './framebuffers';
 import { getExtension, OES_VERTEX_ARRAY_OBJECT } from './extensions';
 import { GPUIndexBuffer } from './GPUIndexBuffer';
+import { 
+	AutoProfileOptions, 
+	QualityPreset, 
+	QualityPresetId,
+	translatePresetToConfig, 
+	detectQualityProfile, 
+	getNextQualityId, 
+	QUALITY_PRESETS 
+} from './performance/autoProfile';
+import { PerformanceAdapter } from './PerformanceAdapter';
 
 export class GPUComposer {
 	/**
@@ -210,6 +220,21 @@ export class GPUComposer {
 	private _numTicks = 0;
 
 	/**
+	 * Auto-performance profiling options for dynamic quality adjustment.
+	 */
+	private _autoProfileOptions?: AutoProfileOptions;
+
+	/**
+	 * Performance adapter for runtime quality adjustments.
+	 */
+	private _performanceAdapter?: PerformanceAdapter;
+
+	/**
+	 * Debug logging flag for performance events.
+	 */
+	private _debugPerformance = false;
+
+	/**
 	 * Create a GPUComposer from an existing THREE.WebGLRenderer that shares a single WebGL context.
 	 * @param renderer - Threejs WebGLRenderer.
 	 * @param params - GPUComposer parameters.
@@ -230,6 +255,7 @@ export class GPUComposer {
 			clearValue?: number | number[],
 			verboseLogging?: boolean,
 			errorCallback?: ErrorCallback,
+			autoPerformanceProfile?: AutoProfileOptions,
 		},
 	) {
 		const composer = new GPUComposer(
@@ -277,10 +303,11 @@ export class GPUComposer {
 			// Optionally pass in an error callback in case we want to handle errors related to webgl support.
 			// e.g. throw up a modal telling user this will not work on their device.
 			errorCallback?: ErrorCallback,
+			autoPerformanceProfile?: AutoProfileOptions,
 		},
 	) {
 		// Check params.
-		const validKeys = ['canvas', 'context', 'contextID', 'contextAttributes', 'glslVersion', 'intPrecision', 'floatPrecision', 'clearValue', 'verboseLogging', 'errorCallback'];
+		const validKeys = ['canvas', 'context', 'contextID', 'contextAttributes', 'glslVersion', 'intPrecision', 'floatPrecision', 'clearValue', 'verboseLogging', 'errorCallback', 'autoPerformanceProfile'];
 		const requiredKeys = ['canvas'];
 		const keys = Object.keys(params);
 		checkValidKeys(keys, validKeys, 'GPUComposer(params)');
@@ -363,6 +390,14 @@ export class GPUComposer {
 
 		if (params.clearValue !== undefined) {
 			this.clearValue = params.clearValue;
+		}
+
+		// Auto-performance profile setup.
+		if (params.autoPerformanceProfile !== undefined) {
+			this._autoProfileOptions = params.autoPerformanceProfile;
+			// Initialize performance adapter if auto-profiling is enabled
+			this._performanceAdapter = new PerformanceAdapter(this, params.autoPerformanceProfile);
+			this._debugPerformance = params.autoPerformanceProfile.debugLogging || false;
 		}
 
 		// Canvas setup.
@@ -595,6 +630,11 @@ export class GPUComposer {
 		// Save dimensions.
 		this._width = width;
 		this._height = height;
+
+		// Performance monitoring hook for auto-profile
+		if (this._autoProfileOptions?.onCanvasResize) {
+			this._autoProfileOptions.onCanvasResize(width, height);
+		}
 	};
 
 	/**
@@ -2086,7 +2126,14 @@ export class GPUComposer {
 
 		const { canvas } = this;
 		const filename = params.filename || 'output';
-		const callback = params.callback || saveAs; // Default to saving the image with file-saver.
+		const callback = params.callback || ((blob: Blob, filename: string) => {
+			// Default to saving the image with file-saver if available
+			if (typeof (globalThis as any).saveAs === 'function') {
+				(globalThis as any).saveAs(blob, filename);
+			} else {
+				console.warn('saveAs function not available. Please provide a callback or include file-saver library.');
+			}
+		});
 		// TODO: need to adjust the canvas size to get the correct px ratio from toBlob().
 		// const ratio = window.devicePixelRatio || 1;
 		canvas.toBlob((blob) => {
@@ -2123,6 +2170,62 @@ export class GPUComposer {
 		const factor = 0.9;
 		const fps =  Number.parseFloat((factor * _lastTickFPS + (1 - factor) * currentFPS).toFixed(1));
 		this._lastTickFPS = fps;
+
+		// Auto-performance profiling hook
+		if (this._autoProfileOptions?.onPerformanceUpdate) {
+			this._autoProfileOptions.onPerformanceUpdate({
+				fps,
+				numTicks: this._numTicks,
+				timestamp: currentTime,
+				canvasWidth: this._width,
+				canvasHeight: this._height,
+			});
+		}
+
+		// Runtime performance hooks
+		if (this._performanceAdapter && this._autoProfileOptions) {
+			const performanceData = {
+				fps,
+				numTicks: this._numTicks,
+				timestamp: currentTime,
+				canvasWidth: this._width,
+				canvasHeight: this._height,
+			};
+
+			// Check if quality adjustment is needed
+			const targetFPS = this._autoProfileOptions.targetFPS || 60; // Default to 60 FPS
+			const shouldDowngrade = fps < targetFPS * 0.8; // 20% below target
+			const shouldUpgrade = fps > targetFPS * 1.2; // 20% above target
+
+			if (shouldDowngrade) {
+				const currentPreset = this._performanceAdapter.getCurrentPreset();
+				if (currentPreset) {
+					const nextQualityId = getNextQualityId(currentPreset.id, 'down');
+					if (nextQualityId && nextQualityId !== currentPreset.id) {
+						const nextPreset = QUALITY_PRESETS[nextQualityId];
+						this._performanceAdapter.applyPreset(nextPreset);
+						
+						if (this._debugPerformance) {
+							console.log(`[GPU-IO Performance] Downgraded quality: ${currentPreset.id} → ${nextQualityId} (FPS: ${fps})`);
+						}
+					}
+				}
+			} else if (shouldUpgrade && this._numTicks % 120 === 0) { // Check upgrade less frequently
+				const currentPreset = this._performanceAdapter.getCurrentPreset();
+				if (currentPreset) {
+					const nextQualityId = getNextQualityId(currentPreset.id, 'up');
+					if (nextQualityId && nextQualityId !== currentPreset.id) {
+						const nextPreset = QUALITY_PRESETS[nextQualityId];
+						this._performanceAdapter.applyPreset(nextPreset);
+						
+						if (this._debugPerformance) {
+							console.log(`[GPU-IO Performance] Upgraded quality: ${currentPreset.id} → ${nextQualityId} (FPS: ${fps})`);
+						}
+					}
+				}
+			}
+		}
+
 		return {
 			fps,
 			numTicks: this._numTicks,
@@ -2135,6 +2238,64 @@ export class GPUComposer {
 	 */
 	get numTicks() {
 		return this._numTicks;
+	}
+
+	/**
+	 * Set a quality preset for performance optimization.
+	 * @param presetId - The quality preset ID ('high', 'medium', 'low', 'minimal')
+	 */
+	setQualityPreset(presetId: QualityPresetId) {
+		if (!this._performanceAdapter) {
+			if (this.verboseLogging) {
+				console.warn('[GPU-IO] Performance adapter not initialized. Enable autoPerformanceProfile to use quality presets.');
+			}
+			return;
+		}
+
+		const preset = QUALITY_PRESETS[presetId];
+		if (!preset) {
+			throw new Error(`[GPU-IO] Invalid quality preset: ${presetId}. Available presets: ${Object.keys(QUALITY_PRESETS).join(', ')}`);
+		}
+
+		this._performanceAdapter.applyPreset(preset);
+		
+		if (this._debugPerformance) {
+			console.log(`[GPU-IO Performance] Applied quality preset: ${presetId}`);
+		}
+	}
+
+	/**
+	 * Get the current quality preset.
+	 * @returns The current quality preset or null if not set
+	 */
+	getCurrentQualityPreset(): QualityPreset | null {
+		return this._performanceAdapter?.getCurrentPreset() || null;
+	}
+
+	/**
+	 * Reset performance configuration to original values.
+	 */
+	resetPerformanceConfig() {
+		if (!this._performanceAdapter) {
+			if (this.verboseLogging) {
+				console.warn('[GPU-IO] Performance adapter not initialized. Enable autoPerformanceProfile to use performance features.');
+			}
+			return;
+		}
+
+		this._performanceAdapter.resetToOriginal();
+		
+		if (this._debugPerformance) {
+			console.log('[GPU-IO Performance] Reset to original configuration');
+		}
+	}
+
+	/**
+	 * Enable or disable debug logging for performance events.
+	 * @param enabled - Whether to enable debug logging
+	 */
+	setPerformanceDebugLogging(enabled: boolean) {
+		this._debugPerformance = enabled;
 	}
 	
 	/**
@@ -2184,7 +2345,7 @@ export class GPUComposer {
 		delete this._enabledVertexAttributes;
 
 		// Delete vertex shaders.
-		Object.values(this._vertexShaders).forEach(({ compiledShaders })=> {
+		(Object as any).values(this._vertexShaders).forEach(({ compiledShaders }: any)=> {
 			Object.keys(compiledShaders).forEach(key => {
 				gl.deleteShader(compiledShaders[key]);
 				delete compiledShaders[key];
@@ -2194,7 +2355,7 @@ export class GPUComposer {
 		delete this._vertexShaders;
 		
 		// Delete fragment shaders.
-		Object.values(this._copyPrograms).forEach(program => {
+		(Object as any).values(this._copyPrograms).forEach((program: any) => {
 			program.dispose();
 		});
 		Object.keys(this._copyPrograms).forEach(key => {
@@ -2204,7 +2365,7 @@ export class GPUComposer {
 		// @ts-ignore;
 		delete this._copyPrograms;
 
-		Object.values(this._setValuePrograms).forEach(program => {
+		(Object as any).values(this._setValuePrograms).forEach((program: any) => {
 			program.dispose();
 		});
 		Object.keys(this._setValuePrograms).forEach(key => {
@@ -2252,5 +2413,7 @@ export class GPUComposer {
 		// @ts-ignore
 		delete this._clearValue;
 		delete this._clearValueVec4;
+		// @ts-ignore
+		delete this._debugPerformance;
 	}
 }

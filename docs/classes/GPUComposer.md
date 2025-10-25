@@ -31,6 +31,10 @@
 - [resetThreeState](GPUComposer.md#resetthreestate)
 - [savePNG](GPUComposer.md#savepng)
 - [tick](GPUComposer.md#tick)
+- [setQualityPreset](GPUComposer.md#setqualitypreset)
+- [getCurrentQualityPreset](GPUComposer.md#getcurrentqualitypreset)
+- [resetPerformanceConfig](GPUComposer.md#resetperformanceconfig)
+- [setPerformanceDebugLogging](GPUComposer.md#setperformancedebuglogging)
 - [dispose](GPUComposer.md#dispose)
 
 ### Constructors
@@ -111,6 +115,7 @@ Create a GPUComposer from an existing THREE.WebGLRenderer that shares a single W
 | `params.clearValue?` | `number` \| `number`[] | Value to write to canvas when GPUComposer.clear() is called. |
 | `params.verboseLogging?` | `boolean` | Set the verbosity of GPUComposer logging (defaults to false). |
 | `params.errorCallback?` | [`ErrorCallback`](../README.md#errorcallback) | Custom error handler, defaults to throwing an Error with message. |
+| `params.autoPerformanceProfile?` | [`AutoProfileOptions`](../interfaces/performance.AutoProfileOptions.md) | - |
 
 #### Returns
 
@@ -441,6 +446,68 @@ An Object containing the current fps of your application and the number of times
 
 ___
 
+### setQualityPreset
+
+▸ **setQualityPreset**(`presetId`): `void`
+
+Set a quality preset for performance optimization.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `presetId` | [`QualityPresetId`](../modules/performance.md#qualitypresetid) | The quality preset ID ('high', 'medium', 'low', 'minimal') |
+
+#### Returns
+
+`void`
+
+___
+
+### getCurrentQualityPreset
+
+▸ **getCurrentQualityPreset**(): ``null`` \| [`QualityPreset`](../interfaces/performance.QualityPreset.md)
+
+Get the current quality preset.
+
+#### Returns
+
+``null`` \| [`QualityPreset`](../interfaces/performance.QualityPreset.md)
+
+The current quality preset or null if not set
+
+___
+
+### resetPerformanceConfig
+
+▸ **resetPerformanceConfig**(): `void`
+
+Reset performance configuration to original values.
+
+#### Returns
+
+`void`
+
+___
+
+### setPerformanceDebugLogging
+
+▸ **setPerformanceDebugLogging**(`enabled`): `void`
+
+Enable or disable debug logging for performance events.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `enabled` | `boolean` | Whether to enable debug logging |
+
+#### Returns
+
+`void`
+
+___
+
 ### dispose
 
 ▸ **dispose**(): `void`
@@ -474,6 +541,7 @@ Create a GPUComposer.
 | `params.clearValue?` | `number` \| `number`[] | Value to write to canvas when GPUComposer.clear() is called. |
 | `params.verboseLogging?` | `boolean` | Set the verbosity of GPUComposer logging (defaults to false). |
 | `params.errorCallback?` | [`ErrorCallback`](../README.md#errorcallback) | Custom error handler, defaults to throwing an Error with message. |
+| `params.autoPerformanceProfile?` | [`AutoProfileOptions`](../interfaces/performance.AutoProfileOptions.md) | - |
 
 ## Accessors
 

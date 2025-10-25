@@ -221,7 +221,7 @@ export class GPUProgram {
 			delete _fragmentShaders[key];
 		}
 		// Delete all cached uniform locations.
-		const uniforms = Object.values(_uniforms);
+		const uniforms = (Object as any).values(_uniforms);
 		for (let i = 0, numUniforms = uniforms.length; i < numUniforms; i++) {
 			uniforms[i].location = new WeakMap();
 		}
@@ -680,7 +680,7 @@ export class GPUProgram {
 		if (!gl) throw new Error(`Must call dispose() on all GPUPrograms before calling dispose() on GPUComposer.`);
 
 		// Unbind all gl data before deleting.
-		Object.values(_programs).forEach(program => {
+		(Object as any).values(_programs).forEach((program: WebGLProgram) => {
 			if (program) {
 				gl.deleteProgram(program);
 				_programsKeyLookup.delete(program);
@@ -691,7 +691,7 @@ export class GPUProgram {
 		});
 
 		// Delete fragment shaders.
-		Object.values(_fragmentShaders).forEach(shader => {
+		(Object as any).values(_fragmentShaders).forEach((shader: WebGLShader) => {
 			gl.deleteShader(shader);
 		});
 		Object.keys(_fragmentShaders).forEach(key => {

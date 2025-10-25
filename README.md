@@ -176,6 +176,84 @@ loop(); // Start animation loop.
 [Demo this code](https://apps.amandaghassaei.com/gpu-io/examples/demo/) - You should see the noise slowly blur, refresh the page to start it over.
 
 
+## Performance Auto-Tuning
+
+gpu-io includes automatic performance profiling that dynamically adjusts quality settings based on your device's capabilities and runtime performance. This helps ensure smooth performance across a wide range of devices, from high-end desktops to mobile phones.
+
+### Enabling Auto-Performance
+
+To enable automatic performance tuning, pass the `autoPerformanceProfile` option when creating a GPUComposer:
+
+```js
+import { GPUComposer } from 'gpu-io';
+
+const composer = new GPUComposer({
+  canvas: document.getElementById('webgl-canvas'),
+  autoPerformanceProfile: true, // Enable with default settings
+});
+
+// Or with custom options:
+const composer = new GPUComposer({
+  canvas: document.getElementById('webgl-canvas'),
+  autoPerformanceProfile: {
+    profileId: 'medium', // Start with specific quality preset
+    debugLogging: true, // Enable performance debug logs
+    onPerformanceUpdate: (metrics) => {
+      console.log('FPS:', metrics.fps);
+    },
+  },
+});
+```
+
+### Quality Presets
+
+The auto-performance system uses four quality presets:
+
+- **High**: Best visual quality, highest performance requirements
+- **Medium**: Balanced quality and performance
+- **Low**: Reduced quality for better performance
+- **Minimal**: Lowest quality, best performance on low-end devices
+
+### Manual Quality Control
+
+You can also manually control quality presets:
+
+```js
+// Set a specific quality preset
+composer.setQualityPreset('low');
+
+// Get current quality preset
+const currentPreset = composer.getCurrentQualityPreset();
+
+// Reset to auto-detected quality
+composer.resetPerformanceConfig();
+```
+
+### Opting Out
+
+If you prefer to manage performance manually, simply don't include the `autoPerformanceProfile` option:
+
+```js
+const composer = new GPUComposer({
+  canvas: document.getElementById('webgl-canvas'),
+  // No autoPerformanceProfile - manual control
+});
+```
+
+### Troubleshooting for Reduced-Motion Users
+
+If you have `prefers-reduced-motion` enabled in your system settings, the auto-performance system will automatically select the lowest quality preset (`minimal`) to respect your accessibility preferences. To override this behavior, you can manually set a specific quality preset:
+
+```js
+const composer = new GPUComposer({
+  canvas: document.getElementById('webgl-canvas'),
+  autoPerformanceProfile: {
+    profileId: 'medium', // Override reduced-motion detection
+  },
+});
+```
+
+
 ## Examples
 
 Check out the [Examples page](https://apps.amandaghassaei.com/gpu-io/examples/) to really understand how gpu-io works and how to easily create touch interactions in your application.

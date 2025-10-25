@@ -7,6 +7,13 @@ module.exports = function(config) {
     // base path that will be used to resolve all patterns (eg. files, exclude)
     basePath: '',
 
+    // plugins to load
+    plugins: [
+      'karma-mocha',
+      'karma-chai',
+      'karma-chrome-launcher',
+      'karma-mocha-reporter'
+    ],
 
     // frameworks to use
     // available frameworks: https://www.npmjs.com/search?q=keywords:karma-adapter
@@ -17,7 +24,8 @@ module.exports = function(config) {
     files: [
       'dist/*.js',
       'node_modules/@petamoriken/float16/browser/float16.js',
-	  'node_modules/@amandaghassaei/type-checks/dist/type-checks.js',
+	  // 'node_modules/@amandaghassaei/type-checks/dist/type-checks.js', // Commented out due to ES module incompatibility
+	  'tests/common/typeChecks.js', // Temporary TypeChecks implementation for testing
 	  'node_modules/three/build/three.js',
       'tests/common/*.js',
 	  {pattern: "tests/common/*.png", watched: false, included: false, served: true},
@@ -74,6 +82,38 @@ module.exports = function(config) {
     // available browser launchers: https://www.npmjs.com/search?q=keywords:karma-launcher
     browsers: ['ChromeHeadless'],
 
+    // Custom browser launchers for performance testing
+    customLaunchers: {
+      ChromeLowSpec: {
+        base: 'ChromeHeadless',
+        flags: [
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
+          '--max-old-space-size=256',
+          '--memory-pressure-off',
+          '--disable-background-timer-throttling',
+          '--disable-renderer-backgrounding',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-ipc-flooding-protection',
+          '--use-gl=swiftshader-webgl',
+          '--disable-gpu-sandbox'
+        ]
+      },
+      ChromeHighSpec: {
+        base: 'ChromeHeadless',
+        flags: [
+          '--disable-web-security',
+          '--enable-gpu-rasterization',
+          '--enable-zero-copy',
+          '--enable-hardware-overlays',
+          '--max-old-space-size=2048',
+          '--disable-background-timer-throttling',
+          '--disable-renderer-backgrounding',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-ipc-flooding-protection'
+        ]
+      }
+    },
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
