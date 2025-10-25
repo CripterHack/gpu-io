@@ -1,0 +1,62 @@
+<html>
+	<head>
+		<title>Auto-Performance Tuning Demo</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<meta charset="utf-8"/>
+		<link rel="stylesheet" type="text/css" href="../common/micromodal.css" />
+		<link rel="stylesheet" type="text/css" href="../common/index.css" />
+		<script src="../common/tweakpane-3.1.1.min.js"></script>
+		<script src="../common/micromodal.min.js"></script>
+		<script src="../common/canvas-capture.min.js"></script>
+		<script src="../../dist/gpu-io.min.js"></script>
+	</head>
+	<body>
+		<div class="modal micromodal-slide" id="modal-1" aria-hidden="true">
+			<div class="modal__overlay" tabindex="-1" data-micromodal-close>
+			  <div class="modal__container" role="dialog" aria-modal="true" aria-labelledby="modal-1-title">
+				<header class="modal__header">
+				  <h2 class="modal__title" id="modal-1-title">
+					Auto-Performance Tuning Demo
+				  </h2>
+				  <button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+				</header>
+				<main class="modal__content" id="modal-1-content">
+					<p>
+						This demo showcases <strong>gpu-io's automatic performance tuning</strong> feature. The simulation adapts its quality settings in real-time based on your device's performance capabilities.
+						You can manually override the auto-tuning to compare different quality presets and see how they affect both visual quality and performance.
+					</p>
+					<p>
+						<strong>Auto-Tuning Features:</strong><br/>
+						• Automatically detects device performance capabilities<br/>
+						• Dynamically adjusts quality settings to maintain smooth framerates<br/>
+						• Provides four quality presets: <code>high</code> (highest), <code>medium</code> (medium), <code>low</code> (low), and <code>minimal</code> (minimal)<br/>
+						• Can be enabled/disabled and customized per application needs
+					</p>
+					<p>
+						<strong>Instructions:</strong> Use the controls on the right to toggle between automatic and manual quality settings. 
+						Touch/mouseover to interact with the fluid simulation. Watch the FPS counter to see how different quality settings affect performance.
+						Press "v" to record a video.
+					</p>
+					<p>
+						<strong>Quality Presets:</strong><br/>
+						• <strong>High:</strong> Maximum quality with highest particle count and resolution<br/>
+						• <strong>Medium:</strong> Balanced quality and performance<br/>
+						• <strong>Low:</strong> Reduced quality for better performance on slower devices<br/>
+						• <strong>Minimal:</strong> Minimal quality for maximum compatibility
+					</p>
+					<p>
+						<strong>Note for Reduced-Motion Users:</strong> If you have reduced-motion preferences enabled, auto-tuning may be disabled by default. 
+						You can manually enable it using the controls or by setting <code>respectReducedMotion: false</code> in the configuration.
+					</p>
+				  <p>
+					This page is part of a series of examples using <a href="https://apps.amandaghassaei.com/gpu-io/examples/">gpu-io</a>, a GPU-accelerated computing library for physics simulations and other mathematical calculations.
+					Find the source code on <a id="sourceCode" href="https://github.com/amandaghassaei/gpu-io/tree/main/examples/auto-performance">Github</a>.
+				  </p>
+				</main>
+			  </div>
+			</div>
+		  </div>
+	</body>
+	<script src="./index.js"></script>
+	<script src="../common/wrapper.js"></script>
+</html>

@@ -5,6 +5,83 @@
 gpu-io source code: [github.com/amandaghassaei/gpu-io](https://github.com/amandaghassaei/gpu-io)  
 examples source code: [github.com/amandaghassaei/gpu-io/examples](https://github.com/amandaghassaei/gpu-io/tree/main/examples)  
 
+## Performance Auto-Tuning
+
+gpu-io includes automatic performance profiling that dynamically adjusts quality settings based on your device's capabilities and runtime performance. This helps ensure smooth performance across a wide range of devices, from high-end desktops to mobile phones.
+
+### Enabling Auto-Performance
+
+To enable automatic performance tuning, pass the `autoPerformanceProfile` option when creating a GPUComposer:
+
+```js
+import { GPUComposer } from 'gpu-io';
+
+const composer = new GPUComposer({
+  canvas: document.getElementById('webgl-canvas'),
+  autoPerformanceProfile: true, // Enable with default settings
+});
+
+// Or with custom options:
+const composer = new GPUComposer({
+  canvas: document.getElementById('webgl-canvas'),
+  autoPerformanceProfile: {
+    profileId: 'medium', // Start with specific quality preset
+    debugLogging: true, // Enable performance debug logs
+    onPerformanceUpdate: (metrics) => {
+      console.log('FPS:', metrics.fps);
+    },
+  },
+});
+```
+
+### Quality Presets
+
+The auto-performance system uses four quality presets:
+
+- **High**: Best visual quality, highest performance requirements
+- **Medium**: Balanced quality and performance
+- **Low**: Reduced quality for better performance
+- **Minimal**: Lowest quality, best performance on low-end devices
+
+### Manual Quality Control
+
+You can also manually control quality presets:
+
+```js
+// Set a specific quality preset
+composer.setQualityPreset('low');
+
+// Get current quality preset
+const currentPreset = composer.getCurrentQualityPreset();
+
+// Reset to auto-detected quality
+composer.resetPerformanceConfig();
+```
+
+### Opting Out
+
+If you prefer to manage performance manually, simply don't include the `autoPerformanceProfile` option:
+
+```js
+const composer = new GPUComposer({
+  canvas: document.getElementById('webgl-canvas'),
+  // No autoPerformanceProfile - manual control
+});
+```
+
+### Troubleshooting for Reduced-Motion Users
+
+If you have `prefers-reduced-motion` enabled in your system settings, the auto-performance system will automatically select the lowest quality preset (`minimal`) to respect your accessibility preferences. To override this behavior, you can manually set a specific quality preset:
+
+```js
+const composer = new GPUComposer({
+  canvas: document.getElementById('webgl-canvas'),
+  autoPerformanceProfile: {
+    profileId: 'medium', // Override reduced-motion detection
+  },
+});
+```
+
 
 ## Grid-Based Simulations
 
@@ -21,6 +98,10 @@ This app simulates the network effects of a multicellular slime mold (Physarum p
 ### [Fluid Simulation](https://apps.amandaghassaei.com/gpu-io/examples/fluid/)
 [![Fluid Simulation](./fluid/main.png)](https://apps.amandaghassaei.com/gpu-io/examples/fluid/)  
 This simulation solves the <a href="https://en.wikipedia.org/wiki/Navier%E2%80%93Stokes_equations">Navier-Stokes equations</a> for incompressible fluids. The fluid visualization includes thousands of <a href="https://en.wikipedia.org/wiki/Lagrangian_particle_tracking">Lagrangian particles</a> that follow the velocity field and leave behind semi-transparent trails as they move.
+
+### [Auto-Performance Tuning Demo](https://apps.amandaghassaei.com/gpu-io/examples/auto-performance/)
+[![Auto-Performance Tuning Demo](./auto-performance/main.png)](https://apps.amandaghassaei.com/gpu-io/examples/auto-performance/)  
+This demo showcases **gpu-io's automatic performance tuning** capabilities. The simulation dynamically adjusts its quality settings based on your device's performance to maintain smooth framerates while maximizing visual quality. Features real-time FPS monitoring, manual quality override controls, and comparison between four quality presets (high, medium, low, minimum).
 
 ## ThreeJS
 
