@@ -82,6 +82,38 @@ module.exports = function(config) {
     // available browser launchers: https://www.npmjs.com/search?q=keywords:karma-launcher
     browsers: ['ChromeHeadless'],
 
+    // Custom browser launchers for performance testing
+    customLaunchers: {
+      ChromeLowSpec: {
+        base: 'ChromeHeadless',
+        flags: [
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
+          '--max-old-space-size=256',
+          '--memory-pressure-off',
+          '--disable-background-timer-throttling',
+          '--disable-renderer-backgrounding',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-ipc-flooding-protection',
+          '--use-gl=swiftshader-webgl',
+          '--disable-gpu-sandbox'
+        ]
+      },
+      ChromeHighSpec: {
+        base: 'ChromeHeadless',
+        flags: [
+          '--disable-web-security',
+          '--enable-gpu-rasterization',
+          '--enable-zero-copy',
+          '--enable-hardware-overlays',
+          '--max-old-space-size=2048',
+          '--disable-background-timer-throttling',
+          '--disable-renderer-backgrounding',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-ipc-flooding-protection'
+        ]
+      }
+    },
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
