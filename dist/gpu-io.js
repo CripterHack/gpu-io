@@ -7120,16 +7120,16 @@
      * Ported from fluid-background.js with TypeScript types and dependency injection
      */
     // English mapping for external consumers:
-    // 'alto' = 'high', 'medio' = 'medium', 'bajo' = 'low', 'minimo' = 'minimal'
+    // 'high' = 'high', 'medium' = 'medium', 'low' = 'low', 'minimal' = 'minimal'
     var QUALITY_PRESET_MAPPING = {
-        high: 'alto',
-        medium: 'medio',
-        low: 'bajo',
-        minimal: 'minimo',
+        high: 'high',
+        medium: 'medium',
+        low: 'low',
+        minimal: 'minimal',
     };
     var QUALITY_PRESETS = {
-        alto: {
-            id: 'alto',
+        high: {
+            id: 'high',
             particleDensity: 0.1,
             maxParticles: 100000,
             particleLifetime: 1000,
@@ -7141,8 +7141,8 @@
             touchForceScale: 2,
             frameBudget: 22
         },
-        medio: {
-            id: 'medio',
+        medium: {
+            id: 'medium',
             particleDensity: 0.07,
             maxParticles: 70000,
             particleLifetime: 900,
@@ -7154,8 +7154,8 @@
             touchForceScale: 1.8,
             frameBudget: 28
         },
-        bajo: {
-            id: 'bajo',
+        low: {
+            id: 'low',
             particleDensity: 0.045,
             maxParticles: 45000,
             particleLifetime: 800,
@@ -7167,8 +7167,8 @@
             touchForceScale: 1.5,
             frameBudget: 32
         },
-        minimo: {
-            id: 'minimo',
+        minimal: {
+            id: 'minimal',
             particleDensity: 0.03,
             maxParticles: 25000,
             particleLifetime: 700,
@@ -7181,7 +7181,7 @@
             frameBudget: 36
         }
     };
-    var QUALITY_SEQUENCE = ['alto', 'medio', 'bajo', 'minimo'];
+    var QUALITY_SEQUENCE = ['high', 'medium', 'low', 'minimal'];
     /**
      * Get the next lower quality preset ID in the sequence
      */
@@ -7228,13 +7228,13 @@
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
         // Check for reduced motion preference first
         if ((_a = capabilities.prefersReducedMotion) !== null && _a !== void 0 ? _a : prefersReducedMotion(env)) {
-            return 'minimo';
+            return 'minimal';
         }
         // Check for data saver mode
         var navigator = (env === null || env === void 0 ? void 0 : env.navigator) || (typeof globalThis !== 'undefined' ? globalThis.navigator : undefined);
         var connection = (navigator === null || navigator === void 0 ? void 0 : navigator.connection) || (navigator === null || navigator === void 0 ? void 0 : navigator.mozConnection) || (navigator === null || navigator === void 0 ? void 0 : navigator.webkitConnection);
         if ((_b = capabilities.saveData) !== null && _b !== void 0 ? _b : (connection && connection.saveData)) {
-            return 'bajo';
+            return 'low';
         }
         // Extract device metrics with fallbacks
         var deviceMemory = (_c = capabilities.deviceMemory) !== null && _c !== void 0 ? _c : ((navigator === null || navigator === void 0 ? void 0 : navigator.deviceMemory) || 0);
@@ -7291,12 +7291,12 @@
         }
         // Map score to quality preset
         if (score <= -1) {
-            return 'bajo';
+            return 'low';
         }
-        if (score <= 1) {
-            return 'medio';
+        if (score <= 2) {
+            return 'medium';
         }
-        return 'alto';
+        return 'high';
     }
     /**
      * Create fluid background with auto-performance profiling
@@ -7315,7 +7315,7 @@
         var selectedProfileId = QUALITY_PRESETS[profileId]
             ? profileId
             : detectQualityProfile(capabilities);
-        QUALITY_PRESETS[selectedProfileId] || QUALITY_PRESETS.minimo;
+        QUALITY_PRESETS[selectedProfileId] || QUALITY_PRESETS.minimal;
         // Log selected profile in development
         if (typeof globalThis !== 'undefined' &&
             (typeof globalThis.process === 'undefined' ||
@@ -7342,7 +7342,7 @@
         var reduceMotionQuery = (window === null || window === void 0 ? void 0 : window.matchMedia) ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
         setupMediaListener(reduceMotionQuery, function (event) {
             if (event.matches && onRequestDowngrade) {
-                onRequestDowngrade('minimo');
+                onRequestDowngrade('minimal');
             }
         });
         // Setup connection monitoring
@@ -7350,7 +7350,7 @@
         var connection = (navigator === null || navigator === void 0 ? void 0 : navigator.connection) || (navigator === null || navigator === void 0 ? void 0 : navigator.mozConnection) || (navigator === null || navigator === void 0 ? void 0 : navigator.webkitConnection);
         var handleConnectionChange = function () {
             if ((connection === null || connection === void 0 ? void 0 : connection.saveData) && onRequestDowngrade) {
-                var targetProfile = selectedProfileId === 'minimo' ? 'minimo' : 'bajo';
+                var targetProfile = selectedProfileId === 'minimal' ? 'minimal' : 'low';
                 onRequestDowngrade(targetProfile);
             }
         };
@@ -9326,7 +9326,7 @@
         });
         /**
          * Set a quality preset for performance optimization.
-         * @param presetId - The quality preset ID ('alto', 'medio', 'bajo', 'minimo')
+         * @param presetId - The quality preset ID ('high', 'medium', 'low', 'minimal')
          */
         GPUComposer.prototype.setQualityPreset = function (presetId) {
             if (!this._performanceAdapter) {

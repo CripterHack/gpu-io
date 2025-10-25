@@ -146,12 +146,12 @@ interface QualityPreset {
     readonly touchForceScale: number;
     readonly frameBudget: number;
 }
-type QualityPresetId = 'alto' | 'medio' | 'bajo' | 'minimo';
+type QualityPresetId = 'high' | 'medium' | 'low' | 'minimal';
 declare const QUALITY_PRESET_MAPPING: {
-    readonly high: "alto";
-    readonly medium: "medio";
-    readonly low: "bajo";
-    readonly minimal: "minimo";
+    readonly high: "high";
+    readonly medium: "medium";
+    readonly low: "low";
+    readonly minimal: "minimal";
 };
 declare const QUALITY_PRESETS: Record<QualityPresetId, QualityPreset>;
 declare const QUALITY_SEQUENCE: QualityPresetId[];
@@ -780,7 +780,7 @@ declare class GPUComposer {
     get numTicks(): number;
     /**
      * Set a quality preset for performance optimization.
-     * @param presetId - The quality preset ID ('alto', 'medio', 'bajo', 'minimo')
+     * @param presetId - The quality preset ID ('high', 'medium', 'low', 'minimal')
      */
     setQualityPreset(presetId: QualityPresetId): void;
     /**
