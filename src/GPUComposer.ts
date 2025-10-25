@@ -70,7 +70,16 @@ import { checkRequiredKeys, checkValidKeys, isValidClearValue } from './checks';
 import { bindFrameBuffer } from './framebuffers';
 import { getExtension, OES_VERTEX_ARRAY_OBJECT } from './extensions';
 import { GPUIndexBuffer } from './GPUIndexBuffer';
-import { AutoProfileOptions } from './performance/autoProfile';
+import { 
+	AutoProfileOptions, 
+	QualityPreset, 
+	QualityPresetId,
+	translatePresetToConfig, 
+	detectQualityProfile, 
+	getNextQualityId, 
+	QUALITY_PRESETS 
+} from './performance/autoProfile';
+import { PerformanceAdapter } from './PerformanceAdapter';
 
 export class GPUComposer {
 	/**
@@ -214,6 +223,16 @@ export class GPUComposer {
 	 * Auto-performance profiling options for dynamic quality adjustment.
 	 */
 	private _autoProfileOptions?: AutoProfileOptions;
+
+	/**
+	 * Performance adapter for runtime quality adjustments.
+	 */
+	private _performanceAdapter?: PerformanceAdapter;
+
+	/**
+	 * Debug logging flag for performance events.
+	 */
+	private _debugPerformance = false;
 
 	/**
 	 * Create a GPUComposer from an existing THREE.WebGLRenderer that shares a single WebGL context.
@@ -376,6 +395,9 @@ export class GPUComposer {
 		// Auto-performance profile setup.
 		if (params.autoPerformanceProfile !== undefined) {
 			this._autoProfileOptions = params.autoPerformanceProfile;
+			// Initialize performance adapter if auto-profiling is enabled
+			this._performanceAdapter = new PerformanceAdapter(this, params.autoPerformanceProfile);
+			this._debugPerformance = params.autoPerformanceProfile.debugLogging || false;
 		}
 
 		// Canvas setup.
@@ -2160,6 +2182,50 @@ export class GPUComposer {
 			});
 		}
 
+		// Runtime performance hooks
+		if (this._performanceAdapter && this._autoProfileOptions) {
+			const performanceData = {
+				fps,
+				numTicks: this._numTicks,
+				timestamp: currentTime,
+				canvasWidth: this._width,
+				canvasHeight: this._height,
+			};
+
+			// Check if quality adjustment is needed
+			const targetFPS = this._autoProfileOptions.targetFPS || 60; // Default to 60 FPS
+			const shouldDowngrade = fps < targetFPS * 0.8; // 20% below target
+			const shouldUpgrade = fps > targetFPS * 1.2; // 20% above target
+
+			if (shouldDowngrade) {
+				const currentPreset = this._performanceAdapter.getCurrentPreset();
+				if (currentPreset) {
+					const nextQualityId = getNextQualityId(currentPreset.id, 'down');
+					if (nextQualityId && nextQualityId !== currentPreset.id) {
+						const nextPreset = QUALITY_PRESETS[nextQualityId];
+						this._performanceAdapter.applyPreset(nextPreset);
+						
+						if (this._debugPerformance) {
+							console.log(`[GPU-IO Performance] Downgraded quality: ${currentPreset.id} → ${nextQualityId} (FPS: ${fps})`);
+						}
+					}
+				}
+			} else if (shouldUpgrade && this._numTicks % 120 === 0) { // Check upgrade less frequently
+				const currentPreset = this._performanceAdapter.getCurrentPreset();
+				if (currentPreset) {
+					const nextQualityId = getNextQualityId(currentPreset.id, 'up');
+					if (nextQualityId && nextQualityId !== currentPreset.id) {
+						const nextPreset = QUALITY_PRESETS[nextQualityId];
+						this._performanceAdapter.applyPreset(nextPreset);
+						
+						if (this._debugPerformance) {
+							console.log(`[GPU-IO Performance] Upgraded quality: ${currentPreset.id} → ${nextQualityId} (FPS: ${fps})`);
+						}
+					}
+				}
+			}
+		}
+
 		return {
 			fps,
 			numTicks: this._numTicks,
@@ -2172,6 +2238,64 @@ export class GPUComposer {
 	 */
 	get numTicks() {
 		return this._numTicks;
+	}
+
+	/**
+	 * Set a quality preset for performance optimization.
+	 * @param presetId - The quality preset ID ('alto', 'medio', 'bajo', 'minimo')
+	 */
+	setQualityPreset(presetId: QualityPresetId) {
+		if (!this._performanceAdapter) {
+			if (this.verboseLogging) {
+				console.warn('[GPU-IO] Performance adapter not initialized. Enable autoPerformanceProfile to use quality presets.');
+			}
+			return;
+		}
+
+		const preset = QUALITY_PRESETS[presetId];
+		if (!preset) {
+			throw new Error(`[GPU-IO] Invalid quality preset: ${presetId}. Available presets: ${Object.keys(QUALITY_PRESETS).join(', ')}`);
+		}
+
+		this._performanceAdapter.applyPreset(preset);
+		
+		if (this._debugPerformance) {
+			console.log(`[GPU-IO Performance] Applied quality preset: ${presetId}`);
+		}
+	}
+
+	/**
+	 * Get the current quality preset.
+	 * @returns The current quality preset or null if not set
+	 */
+	getCurrentQualityPreset(): QualityPreset | null {
+		return this._performanceAdapter?.getCurrentPreset() || null;
+	}
+
+	/**
+	 * Reset performance configuration to original values.
+	 */
+	resetPerformanceConfig() {
+		if (!this._performanceAdapter) {
+			if (this.verboseLogging) {
+				console.warn('[GPU-IO] Performance adapter not initialized. Enable autoPerformanceProfile to use performance features.');
+			}
+			return;
+		}
+
+		this._performanceAdapter.resetToOriginal();
+		
+		if (this._debugPerformance) {
+			console.log('[GPU-IO Performance] Reset to original configuration');
+		}
+	}
+
+	/**
+	 * Enable or disable debug logging for performance events.
+	 * @param enabled - Whether to enable debug logging
+	 */
+	setPerformanceDebugLogging(enabled: boolean) {
+		this._debugPerformance = enabled;
 	}
 	
 	/**
@@ -2289,5 +2413,7 @@ export class GPUComposer {
 		// @ts-ignore
 		delete this._clearValue;
 		delete this._clearValueVec4;
+		// @ts-ignore
+		delete this._debugPerformance;
 	}
 }
