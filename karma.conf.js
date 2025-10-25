@@ -7,6 +7,13 @@ module.exports = function(config) {
     // base path that will be used to resolve all patterns (eg. files, exclude)
     basePath: '',
 
+    // plugins to load
+    plugins: [
+      'karma-mocha',
+      'karma-chai',
+      'karma-chrome-launcher',
+      'karma-mocha-reporter'
+    ],
 
     // frameworks to use
     // available frameworks: https://www.npmjs.com/search?q=keywords:karma-adapter
@@ -17,7 +24,8 @@ module.exports = function(config) {
     files: [
       'dist/*.js',
       'node_modules/@petamoriken/float16/browser/float16.js',
-	  'node_modules/@amandaghassaei/type-checks/dist/type-checks.js',
+	  // 'node_modules/@amandaghassaei/type-checks/dist/type-checks.js', // Commented out due to ES module incompatibility
+	  'tests/common/typeChecks.js', // Temporary TypeChecks implementation for testing
 	  'node_modules/three/build/three.js',
       'tests/common/*.js',
 	  {pattern: "tests/common/*.png", watched: false, included: false, served: true},
