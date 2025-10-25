@@ -111,6 +111,7 @@ Create a GPUComposer from an existing THREE.WebGLRenderer that shares a single W
 | `params.clearValue?` | `number` \| `number`[] | Value to write to canvas when GPUComposer.clear() is called. |
 | `params.verboseLogging?` | `boolean` | Set the verbosity of GPUComposer logging (defaults to false). |
 | `params.errorCallback?` | [`ErrorCallback`](../README.md#errorcallback) | Custom error handler, defaults to throwing an Error with message. |
+| `params.autoPerformanceProfile?` | [`AutoProfileOptions`](../interfaces/performance.AutoProfileOptions.md) | - |
 
 #### Returns
 
@@ -474,6 +475,7 @@ Create a GPUComposer.
 | `params.clearValue?` | `number` \| `number`[] | Value to write to canvas when GPUComposer.clear() is called. |
 | `params.verboseLogging?` | `boolean` | Set the verbosity of GPUComposer logging (defaults to false). |
 | `params.errorCallback?` | [`ErrorCallback`](../README.md#errorcallback) | Custom error handler, defaults to throwing an Error with message. |
+| `params.autoPerformanceProfile?` | [`AutoProfileOptions`](../interfaces/performance.AutoProfileOptions.md) | - |
 
 ## Accessors
 
