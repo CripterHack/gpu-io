@@ -7115,6 +7115,423 @@
         });
     }
 
+    /**
+     * Auto-performance profiling module for GPU-IO
+     * Ported from fluid-background.js with TypeScript types and dependency injection
+     */
+    // English mapping for external consumers:
+    // 'alto' = 'high', 'medio' = 'medium', 'bajo' = 'low', 'minimo' = 'minimal'
+    var QUALITY_PRESET_MAPPING = {
+        high: 'alto',
+        medium: 'medio',
+        low: 'bajo',
+        minimal: 'minimo',
+    };
+    var QUALITY_PRESETS = {
+        alto: {
+            id: 'alto',
+            particleDensity: 0.1,
+            maxParticles: 100000,
+            particleLifetime: 1000,
+            numJacobiSteps: 3,
+            numRenderSteps: 3,
+            velocityScaleFactor: 8,
+            maxVelocity: 30,
+            trailLength: 18,
+            touchForceScale: 2,
+            frameBudget: 22
+        },
+        medio: {
+            id: 'medio',
+            particleDensity: 0.07,
+            maxParticles: 70000,
+            particleLifetime: 900,
+            numJacobiSteps: 3,
+            numRenderSteps: 2,
+            velocityScaleFactor: 10,
+            maxVelocity: 26,
+            trailLength: 14,
+            touchForceScale: 1.8,
+            frameBudget: 28
+        },
+        bajo: {
+            id: 'bajo',
+            particleDensity: 0.045,
+            maxParticles: 45000,
+            particleLifetime: 800,
+            numJacobiSteps: 2,
+            numRenderSteps: 1,
+            velocityScaleFactor: 12,
+            maxVelocity: 22,
+            trailLength: 12,
+            touchForceScale: 1.5,
+            frameBudget: 32
+        },
+        minimo: {
+            id: 'minimo',
+            particleDensity: 0.03,
+            maxParticles: 25000,
+            particleLifetime: 700,
+            numJacobiSteps: 1,
+            numRenderSteps: 1,
+            velocityScaleFactor: 14,
+            maxVelocity: 18,
+            trailLength: 10,
+            touchForceScale: 1.2,
+            frameBudget: 36
+        }
+    };
+    var QUALITY_SEQUENCE = ['alto', 'medio', 'bajo', 'minimo'];
+    /**
+     * Get the next lower quality preset ID in the sequence
+     */
+    function getNextQualityId(id, direction) {
+        if (direction === void 0) { direction = 'down'; }
+        var index = QUALITY_SEQUENCE.indexOf(id);
+        if (index === -1) {
+            return null;
+        }
+        if (direction === 'down') {
+            // Move to lower quality (higher index)
+            if (index >= QUALITY_SEQUENCE.length - 1) {
+                return null;
+            }
+            return QUALITY_SEQUENCE[index + 1];
+        }
+        else {
+            // Move to higher quality (lower index)
+            if (index <= 0) {
+                return null;
+            }
+            return QUALITY_SEQUENCE[index - 1];
+        }
+    }
+    /**
+     * Check if user prefers reduced motion (SSR-safe)
+     */
+    function prefersReducedMotion(env) {
+        var window = (env === null || env === void 0 ? void 0 : env.window) || (typeof globalThis !== 'undefined' ? globalThis.window : undefined);
+        if (!window || !window.matchMedia) {
+            return false;
+        }
+        try {
+            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+        catch (error) {
+            return false;
+        }
+    }
+    /**
+     * Detect optimal quality profile based on device capabilities
+     */
+    function detectQualityProfile(capabilities, env) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+        // Check for reduced motion preference first
+        if ((_a = capabilities.prefersReducedMotion) !== null && _a !== void 0 ? _a : prefersReducedMotion(env)) {
+            return 'minimo';
+        }
+        // Check for data saver mode
+        var navigator = (env === null || env === void 0 ? void 0 : env.navigator) || (typeof globalThis !== 'undefined' ? globalThis.navigator : undefined);
+        var connection = (navigator === null || navigator === void 0 ? void 0 : navigator.connection) || (navigator === null || navigator === void 0 ? void 0 : navigator.mozConnection) || (navigator === null || navigator === void 0 ? void 0 : navigator.webkitConnection);
+        if ((_b = capabilities.saveData) !== null && _b !== void 0 ? _b : (connection && connection.saveData)) {
+            return 'bajo';
+        }
+        // Extract device metrics with fallbacks
+        var deviceMemory = (_c = capabilities.deviceMemory) !== null && _c !== void 0 ? _c : ((navigator === null || navigator === void 0 ? void 0 : navigator.deviceMemory) || 0);
+        var cores = (_d = capabilities.hardwareConcurrency) !== null && _d !== void 0 ? _d : ((navigator === null || navigator === void 0 ? void 0 : navigator.hardwareConcurrency) || 0);
+        var pixelRatio = (_e = capabilities.devicePixelRatio) !== null && _e !== void 0 ? _e : (((_f = env === null || env === void 0 ? void 0 : env.window) === null || _f === void 0 ? void 0 : _f.devicePixelRatio) || 1);
+        var screenWidth = (_g = capabilities.screenWidth) !== null && _g !== void 0 ? _g : (((_h = env === null || env === void 0 ? void 0 : env.window) === null || _h === void 0 ? void 0 : _h.innerWidth) || 0);
+        var screenHeight = (_j = capabilities.screenHeight) !== null && _j !== void 0 ? _j : (((_k = env === null || env === void 0 ? void 0 : env.window) === null || _k === void 0 ? void 0 : _k.innerHeight) || 0);
+        var screenArea = screenWidth * screenHeight;
+        var score = 0;
+        // WebGL2 support
+        if (capabilities.supportsWebGL2) {
+            score += 1;
+        }
+        else {
+            score -= 2;
+        }
+        // Device memory scoring
+        if (deviceMemory >= 8) {
+            score += 2;
+        }
+        else if (deviceMemory >= 4) {
+            score += 1;
+        }
+        else if (deviceMemory > 0) {
+            score -= 1;
+        }
+        else {
+            score -= 1; // Unknown memory
+        }
+        // CPU cores scoring
+        if (cores >= 8) {
+            score += 2;
+        }
+        else if (cores >= 4) {
+            score += 1;
+        }
+        else if (cores > 0) {
+            score -= 1;
+        }
+        else {
+            score -= 1; // Unknown cores
+        }
+        // High pixel ratio penalty
+        if (pixelRatio > 2.5) {
+            score -= 1;
+        }
+        // Large screen penalty
+        if (screenArea > 2500000) {
+            score -= 1;
+        }
+        // Low memory penalty
+        if (deviceMemory && deviceMemory <= 2) {
+            score -= 1;
+        }
+        // Map score to quality preset
+        if (score <= -1) {
+            return 'bajo';
+        }
+        if (score <= 1) {
+            return 'medio';
+        }
+        return 'alto';
+    }
+    /**
+     * Create fluid background with auto-performance profiling
+     * This is a simplified version focused on the profiling logic
+     */
+    function createFluidBackground(gpuioAPI, // Will be properly typed when integrated with GPUComposer
+    options) {
+        var _a, _b;
+        if (options === void 0) { options = {}; }
+        var profileId = options.profileId, onRequestDowngrade = options.onRequestDowngrade, deviceCapabilities = options.deviceCapabilities;
+        // Detect capabilities if not provided
+        var capabilities = deviceCapabilities || {
+            supportsWebGL2: typeof (gpuioAPI === null || gpuioAPI === void 0 ? void 0 : gpuioAPI.isWebGL2Supported) === 'function' ? gpuioAPI.isWebGL2Supported() : true,
+        };
+        // Select quality profile
+        var selectedProfileId = QUALITY_PRESETS[profileId]
+            ? profileId
+            : detectQualityProfile(capabilities);
+        QUALITY_PRESETS[selectedProfileId] || QUALITY_PRESETS.minimo;
+        // Log selected profile in development
+        if (typeof globalThis !== 'undefined' &&
+            (typeof globalThis.process === 'undefined' ||
+                ((_b = (_a = globalThis.process) === null || _a === void 0 ? void 0 : _a.env) === null || _b === void 0 ? void 0 : _b.NODE_ENV) !== 'production')) {
+            console.info("Auto-performance profile selected: \"".concat(selectedProfileId, "\""));
+        }
+        // Setup cleanup callbacks for media listeners
+        var cleanupCallbacks = [];
+        // Monitor reduced motion changes
+        var setupMediaListener = function (query, handler) {
+            if (!query)
+                return;
+            if (typeof query.addEventListener === 'function') {
+                query.addEventListener('change', handler);
+                cleanupCallbacks.push(function () { return query.removeEventListener('change', handler); });
+            }
+            else if (typeof query.addListener === 'function') {
+                query.addListener(handler);
+                cleanupCallbacks.push(function () { return query.removeListener(handler); });
+            }
+        };
+        // Setup reduced motion monitoring
+        var window = typeof globalThis !== 'undefined' ? globalThis.window : undefined;
+        var reduceMotionQuery = (window === null || window === void 0 ? void 0 : window.matchMedia) ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+        setupMediaListener(reduceMotionQuery, function (event) {
+            if (event.matches && onRequestDowngrade) {
+                onRequestDowngrade('minimo');
+            }
+        });
+        // Setup connection monitoring
+        var navigator = typeof globalThis !== 'undefined' ? globalThis.navigator : undefined;
+        var connection = (navigator === null || navigator === void 0 ? void 0 : navigator.connection) || (navigator === null || navigator === void 0 ? void 0 : navigator.mozConnection) || (navigator === null || navigator === void 0 ? void 0 : navigator.webkitConnection);
+        var handleConnectionChange = function () {
+            if ((connection === null || connection === void 0 ? void 0 : connection.saveData) && onRequestDowngrade) {
+                var targetProfile = selectedProfileId === 'minimo' ? 'minimo' : 'bajo';
+                onRequestDowngrade(targetProfile);
+            }
+        };
+        if (connection) {
+            handleConnectionChange();
+            if (typeof connection.addEventListener === 'function') {
+                connection.addEventListener('change', handleConnectionChange);
+                cleanupCallbacks.push(function () { return connection.removeEventListener('change', handleConnectionChange); });
+            }
+        }
+        return {
+            dispose: function () {
+                cleanupCallbacks.forEach(function (fn) { return fn(); });
+                cleanupCallbacks.length = 0;
+            },
+            currentProfile: selectedProfileId
+        };
+    }
+    /**
+     * Utility to translate quality preset properties to composer configuration
+     */
+    function translatePresetToConfig(preset) {
+        return {
+            particleCount: preset.maxParticles,
+            jacobiIterations: preset.numJacobiSteps,
+            renderPasses: preset.numRenderSteps,
+            velocityScale: preset.velocityScaleFactor,
+            trailFadeRate: 1 / preset.trailLength,
+        };
+    }
+
+    var autoProfile = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        QUALITY_PRESETS: QUALITY_PRESETS,
+        QUALITY_PRESET_MAPPING: QUALITY_PRESET_MAPPING,
+        QUALITY_SEQUENCE: QUALITY_SEQUENCE,
+        createFluidBackground: createFluidBackground,
+        detectQualityProfile: detectQualityProfile,
+        getNextQualityId: getNextQualityId,
+        prefersReducedMotion: prefersReducedMotion,
+        translatePresetToConfig: translatePresetToConfig
+    });
+
+    /**
+     * Performance adapter for translating quality presets to composer configuration
+     * This adapter provides runtime hooks for adjusting performance parameters
+     */
+    /**
+     * Performance adapter class that manages quality preset application
+     */
+    var PerformanceAdapter = /** @class */ (function () {
+        function PerformanceAdapter(composer, options) {
+            this._composer = composer;
+            this._options = options;
+            // Debug logging disabled by default
+            this._debugLogging = false;
+            // Store original configuration for fallback
+            this._originalConfig = this._captureCurrentConfig();
+        }
+        /**
+         * Apply a quality preset to the composer
+         */
+        PerformanceAdapter.prototype.applyQualityPreset = function (presetId) {
+            var preset = QUALITY_PRESETS[presetId];
+            if (!preset) {
+                console.warn("Unknown quality preset: ".concat(presetId));
+                return;
+            }
+            this._currentPreset = preset;
+            var config = translatePresetToConfig(preset);
+            // Apply configuration to composer
+            this._applyPerformanceConfig(config);
+            // Debug logging
+            if (this._debugLogging) {
+                console.log("[GPU-IO Performance] Applied quality preset: ".concat(presetId), {
+                    preset: preset,
+                    config: config,
+                    timestamp: performance.now()
+                });
+            }
+            // Notify callback if provided
+            if (this._options.onPerformanceUpdate) {
+                var _a = this._composer.tick(), fps = _a.fps, numTicks = _a.numTicks;
+                this._options.onPerformanceUpdate({
+                    fps: fps,
+                    numTicks: numTicks,
+                    timestamp: performance.now(),
+                    canvasWidth: this._composer.canvas.width,
+                    canvasHeight: this._composer.canvas.height,
+                });
+            }
+        };
+        /**
+         * Apply a quality preset to the composer configuration
+         */
+        PerformanceAdapter.prototype.applyPreset = function (preset) {
+            if (!this._composer)
+                return;
+            // Translate preset to configuration
+            var config = translatePresetToConfig(preset);
+            // Apply configuration to composer
+            this._applyPerformanceConfig(config);
+            // Store current preset
+            this._currentPreset = preset;
+            if (this._debugLogging) {
+                console.log("[PerformanceAdapter] Applied preset:", preset);
+            }
+        };
+        /**
+         * Get the currently applied quality preset
+         */
+        PerformanceAdapter.prototype.getCurrentPreset = function () {
+            return this._currentPreset;
+        };
+        /**
+         * Reset to original configuration
+         */
+        PerformanceAdapter.prototype.resetToOriginal = function () {
+            if (this._originalConfig) {
+                this._applyPerformanceConfig(this._originalConfig);
+                this._currentPreset = undefined;
+                if (this._debugLogging) {
+                    console.log('[GPU-IO Performance] Reset to original configuration');
+                }
+            }
+        };
+        /**
+         * Capture current composer configuration
+         */
+        PerformanceAdapter.prototype._captureCurrentConfig = function () {
+            // Note: Since GPUComposer doesn't currently expose these parameters directly,
+            // we'll store default values that can be overridden by presets
+            return {
+                particleCount: 50000,
+                jacobiIterations: 2,
+                renderPasses: 2,
+                velocityScale: 10,
+                trailFadeRate: 0.1,
+                maxVelocity: 25,
+                touchForceScale: 1.5
+            };
+        };
+        /**
+         * Apply performance configuration to the composer
+         * This method serves as a bridge between preset values and composer internals
+         */
+        PerformanceAdapter.prototype._applyPerformanceConfig = function (config) {
+            // Store configuration for runtime access
+            // Note: The actual application of these parameters would typically happen
+            // in the simulation loop or when creating GPU programs/layers
+            // For now, we store the configuration so it can be accessed by
+            // simulation code that uses the composer
+            this._composer._performanceConfig = config;
+            // Future enhancement: Apply configuration directly to composer internals
+            // This would require modifications to how GPUComposer manages simulation parameters
+        };
+        /**
+         * Get current performance configuration
+         */
+        PerformanceAdapter.prototype.getPerformanceConfig = function () {
+            return this._composer._performanceConfig;
+        };
+        /**
+         * Check if performance downgrade is recommended based on frame timing
+         */
+        PerformanceAdapter.prototype.shouldDowngrade = function (currentFPS) {
+            if (!this._currentPreset)
+                return false;
+            var targetFPS = 1000 / this._currentPreset.frameBudget;
+            return currentFPS < targetFPS * 0.8; // 20% tolerance
+        };
+        /**
+         * Dispose of the adapter
+         */
+        PerformanceAdapter.prototype.dispose = function () {
+            this._currentPreset = undefined;
+            this._originalConfig = undefined;
+        };
+        return PerformanceAdapter;
+    }());
+
     var GPUComposer = /** @class */ (function () {
         /**
          * Create a GPUComposer.
@@ -7194,6 +7611,10 @@
              */
             this.verboseLogging = false;
             this._numTicks = 0;
+            /**
+             * Debug logging flag for performance events.
+             */
+            this._debugPerformance = false;
             // Check params.
             var validKeys = ['canvas', 'context', 'contextID', 'contextAttributes', 'glslVersion', 'intPrecision', 'floatPrecision', 'clearValue', 'verboseLogging', 'errorCallback', 'autoPerformanceProfile'];
             var requiredKeys = ['canvas'];
@@ -7279,6 +7700,9 @@
             // Auto-performance profile setup.
             if (params.autoPerformanceProfile !== undefined) {
                 this._autoProfileOptions = params.autoPerformanceProfile;
+                // Initialize performance adapter if auto-profiling is enabled
+                this._performanceAdapter = new PerformanceAdapter(this, params.autoPerformanceProfile);
+                this._debugPerformance = params.autoPerformanceProfile.debugLogging || false;
             }
             // Canvas setup.
             this.resize([canvas.clientWidth, canvas.clientHeight]);
@@ -8844,6 +9268,46 @@
                     canvasHeight: this._height,
                 });
             }
+            // Runtime performance hooks
+            if (this._performanceAdapter && this._autoProfileOptions) {
+                ({
+                    fps: fps,
+                    numTicks: this._numTicks,
+                    timestamp: currentTime,
+                    canvasWidth: this._width,
+                    canvasHeight: this._height,
+                });
+                // Check if quality adjustment is needed
+                var targetFPS = this._autoProfileOptions.targetFPS || 60; // Default to 60 FPS
+                var shouldDowngrade = fps < targetFPS * 0.8; // 20% below target
+                var shouldUpgrade = fps > targetFPS * 1.2; // 20% above target
+                if (shouldDowngrade) {
+                    var currentPreset = this._performanceAdapter.getCurrentPreset();
+                    if (currentPreset) {
+                        var nextQualityId = getNextQualityId(currentPreset.id, 'down');
+                        if (nextQualityId && nextQualityId !== currentPreset.id) {
+                            var nextPreset = QUALITY_PRESETS[nextQualityId];
+                            this._performanceAdapter.applyPreset(nextPreset);
+                            if (this._debugPerformance) {
+                                console.log("[GPU-IO Performance] Downgraded quality: ".concat(currentPreset.id, " \u2192 ").concat(nextQualityId, " (FPS: ").concat(fps, ")"));
+                            }
+                        }
+                    }
+                }
+                else if (shouldUpgrade && this._numTicks % 120 === 0) { // Check upgrade less frequently
+                    var currentPreset = this._performanceAdapter.getCurrentPreset();
+                    if (currentPreset) {
+                        var nextQualityId = getNextQualityId(currentPreset.id, 'up');
+                        if (nextQualityId && nextQualityId !== currentPreset.id) {
+                            var nextPreset = QUALITY_PRESETS[nextQualityId];
+                            this._performanceAdapter.applyPreset(nextPreset);
+                            if (this._debugPerformance) {
+                                console.log("[GPU-IO Performance] Upgraded quality: ".concat(currentPreset.id, " \u2192 ").concat(nextQualityId, " (FPS: ").concat(fps, ")"));
+                            }
+                        }
+                    }
+                }
+            }
             return {
                 fps: fps,
                 numTicks: this._numTicks,
@@ -8860,6 +9324,56 @@
             enumerable: false,
             configurable: true
         });
+        /**
+         * Set a quality preset for performance optimization.
+         * @param presetId - The quality preset ID ('alto', 'medio', 'bajo', 'minimo')
+         */
+        GPUComposer.prototype.setQualityPreset = function (presetId) {
+            if (!this._performanceAdapter) {
+                if (this.verboseLogging) {
+                    console.warn('[GPU-IO] Performance adapter not initialized. Enable autoPerformanceProfile to use quality presets.');
+                }
+                return;
+            }
+            var preset = QUALITY_PRESETS[presetId];
+            if (!preset) {
+                throw new Error("[GPU-IO] Invalid quality preset: ".concat(presetId, ". Available presets: ").concat(Object.keys(QUALITY_PRESETS).join(', ')));
+            }
+            this._performanceAdapter.applyPreset(preset);
+            if (this._debugPerformance) {
+                console.log("[GPU-IO Performance] Applied quality preset: ".concat(presetId));
+            }
+        };
+        /**
+         * Get the current quality preset.
+         * @returns The current quality preset or null if not set
+         */
+        GPUComposer.prototype.getCurrentQualityPreset = function () {
+            var _a;
+            return ((_a = this._performanceAdapter) === null || _a === void 0 ? void 0 : _a.getCurrentPreset()) || null;
+        };
+        /**
+         * Reset performance configuration to original values.
+         */
+        GPUComposer.prototype.resetPerformanceConfig = function () {
+            if (!this._performanceAdapter) {
+                if (this.verboseLogging) {
+                    console.warn('[GPU-IO] Performance adapter not initialized. Enable autoPerformanceProfile to use performance features.');
+                }
+                return;
+            }
+            this._performanceAdapter.resetToOriginal();
+            if (this._debugPerformance) {
+                console.log('[GPU-IO Performance] Reset to original configuration');
+            }
+        };
+        /**
+         * Enable or disable debug logging for performance events.
+         * @param enabled - Whether to enable debug logging
+         */
+        GPUComposer.prototype.setPerformanceDebugLogging = function (enabled) {
+            this._debugPerformance = enabled;
+        };
         /**
          * Deallocate GPUComposer instance and associated WebGL properties.
          */
@@ -8970,6 +9484,8 @@
             // @ts-ignore
             delete this._clearValue;
             delete this._clearValueVec4;
+            // @ts-ignore
+            delete this._debugPerformance;
         };
         return GPUComposer;
     }());
@@ -9056,271 +9572,6 @@
         };
         return GPUIndexBuffer;
     }());
-
-    /**
-     * Auto-performance profiling module for GPU-IO
-     * Ported from fluid-background.js with TypeScript types and dependency injection
-     */
-    // English mapping for external consumers:
-    // 'alto' = 'high', 'medio' = 'medium', 'bajo' = 'low', 'minimo' = 'minimal'
-    var QUALITY_PRESET_MAPPING = {
-        high: 'alto',
-        medium: 'medio',
-        low: 'bajo',
-        minimal: 'minimo',
-    };
-    var QUALITY_PRESETS = {
-        alto: {
-            id: 'alto',
-            particleDensity: 0.1,
-            maxParticles: 100000,
-            particleLifetime: 1000,
-            numJacobiSteps: 3,
-            numRenderSteps: 3,
-            velocityScaleFactor: 8,
-            maxVelocity: 30,
-            trailLength: 18,
-            touchForceScale: 2,
-            frameBudget: 22
-        },
-        medio: {
-            id: 'medio',
-            particleDensity: 0.07,
-            maxParticles: 70000,
-            particleLifetime: 900,
-            numJacobiSteps: 3,
-            numRenderSteps: 2,
-            velocityScaleFactor: 10,
-            maxVelocity: 26,
-            trailLength: 14,
-            touchForceScale: 1.8,
-            frameBudget: 28
-        },
-        bajo: {
-            id: 'bajo',
-            particleDensity: 0.045,
-            maxParticles: 45000,
-            particleLifetime: 800,
-            numJacobiSteps: 2,
-            numRenderSteps: 1,
-            velocityScaleFactor: 12,
-            maxVelocity: 22,
-            trailLength: 12,
-            touchForceScale: 1.5,
-            frameBudget: 32
-        },
-        minimo: {
-            id: 'minimo',
-            particleDensity: 0.03,
-            maxParticles: 25000,
-            particleLifetime: 700,
-            numJacobiSteps: 1,
-            numRenderSteps: 1,
-            velocityScaleFactor: 14,
-            maxVelocity: 18,
-            trailLength: 10,
-            touchForceScale: 1.2,
-            frameBudget: 36
-        }
-    };
-    var QUALITY_SEQUENCE = ['alto', 'medio', 'bajo', 'minimo'];
-    /**
-     * Get the next lower quality preset ID in the sequence
-     */
-    function getNextQualityId(id) {
-        var index = QUALITY_SEQUENCE.indexOf(id);
-        if (index === -1 || index >= QUALITY_SEQUENCE.length - 1) {
-            return null;
-        }
-        return QUALITY_SEQUENCE[index + 1];
-    }
-    /**
-     * Check if user prefers reduced motion (SSR-safe)
-     */
-    function prefersReducedMotion(env) {
-        var window = (env === null || env === void 0 ? void 0 : env.window) || (typeof globalThis !== 'undefined' ? globalThis.window : undefined);
-        if (!window || !window.matchMedia) {
-            return false;
-        }
-        try {
-            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        }
-        catch (error) {
-            return false;
-        }
-    }
-    /**
-     * Detect optimal quality profile based on device capabilities
-     */
-    function detectQualityProfile(capabilities, env) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
-        // Check for reduced motion preference first
-        if ((_a = capabilities.prefersReducedMotion) !== null && _a !== void 0 ? _a : prefersReducedMotion(env)) {
-            return 'minimo';
-        }
-        // Check for data saver mode
-        var navigator = (env === null || env === void 0 ? void 0 : env.navigator) || (typeof globalThis !== 'undefined' ? globalThis.navigator : undefined);
-        var connection = (navigator === null || navigator === void 0 ? void 0 : navigator.connection) || (navigator === null || navigator === void 0 ? void 0 : navigator.mozConnection) || (navigator === null || navigator === void 0 ? void 0 : navigator.webkitConnection);
-        if ((_b = capabilities.saveData) !== null && _b !== void 0 ? _b : (connection && connection.saveData)) {
-            return 'bajo';
-        }
-        // Extract device metrics with fallbacks
-        var deviceMemory = (_c = capabilities.deviceMemory) !== null && _c !== void 0 ? _c : ((navigator === null || navigator === void 0 ? void 0 : navigator.deviceMemory) || 0);
-        var cores = (_d = capabilities.hardwareConcurrency) !== null && _d !== void 0 ? _d : ((navigator === null || navigator === void 0 ? void 0 : navigator.hardwareConcurrency) || 0);
-        var pixelRatio = (_e = capabilities.devicePixelRatio) !== null && _e !== void 0 ? _e : (((_f = env === null || env === void 0 ? void 0 : env.window) === null || _f === void 0 ? void 0 : _f.devicePixelRatio) || 1);
-        var screenWidth = (_g = capabilities.screenWidth) !== null && _g !== void 0 ? _g : (((_h = env === null || env === void 0 ? void 0 : env.window) === null || _h === void 0 ? void 0 : _h.innerWidth) || 0);
-        var screenHeight = (_j = capabilities.screenHeight) !== null && _j !== void 0 ? _j : (((_k = env === null || env === void 0 ? void 0 : env.window) === null || _k === void 0 ? void 0 : _k.innerHeight) || 0);
-        var screenArea = screenWidth * screenHeight;
-        var score = 0;
-        // WebGL2 support
-        if (capabilities.supportsWebGL2) {
-            score += 1;
-        }
-        else {
-            score -= 2;
-        }
-        // Device memory scoring
-        if (deviceMemory >= 8) {
-            score += 2;
-        }
-        else if (deviceMemory >= 4) {
-            score += 1;
-        }
-        else if (deviceMemory > 0) {
-            score -= 1;
-        }
-        else {
-            score -= 1; // Unknown memory
-        }
-        // CPU cores scoring
-        if (cores >= 8) {
-            score += 2;
-        }
-        else if (cores >= 4) {
-            score += 1;
-        }
-        else if (cores > 0) {
-            score -= 1;
-        }
-        else {
-            score -= 1; // Unknown cores
-        }
-        // High pixel ratio penalty
-        if (pixelRatio > 2.5) {
-            score -= 1;
-        }
-        // Large screen penalty
-        if (screenArea > 2500000) {
-            score -= 1;
-        }
-        // Low memory penalty
-        if (deviceMemory && deviceMemory <= 2) {
-            score -= 1;
-        }
-        // Map score to quality preset
-        if (score <= -1) {
-            return 'bajo';
-        }
-        if (score <= 1) {
-            return 'medio';
-        }
-        return 'alto';
-    }
-    /**
-     * Create fluid background with auto-performance profiling
-     * This is a simplified version focused on the profiling logic
-     */
-    function createFluidBackground(gpuioAPI, // Will be properly typed when integrated with GPUComposer
-    options) {
-        var _a, _b;
-        if (options === void 0) { options = {}; }
-        var profileId = options.profileId, onRequestDowngrade = options.onRequestDowngrade, deviceCapabilities = options.deviceCapabilities;
-        // Detect capabilities if not provided
-        var capabilities = deviceCapabilities || {
-            supportsWebGL2: typeof (gpuioAPI === null || gpuioAPI === void 0 ? void 0 : gpuioAPI.isWebGL2Supported) === 'function' ? gpuioAPI.isWebGL2Supported() : true,
-        };
-        // Select quality profile
-        var selectedProfileId = QUALITY_PRESETS[profileId]
-            ? profileId
-            : detectQualityProfile(capabilities);
-        QUALITY_PRESETS[selectedProfileId] || QUALITY_PRESETS.minimo;
-        // Log selected profile in development
-        if (typeof globalThis !== 'undefined' &&
-            (typeof globalThis.process === 'undefined' ||
-                ((_b = (_a = globalThis.process) === null || _a === void 0 ? void 0 : _a.env) === null || _b === void 0 ? void 0 : _b.NODE_ENV) !== 'production')) {
-            console.info("Auto-performance profile selected: \"".concat(selectedProfileId, "\""));
-        }
-        // Setup cleanup callbacks for media listeners
-        var cleanupCallbacks = [];
-        // Monitor reduced motion changes
-        var setupMediaListener = function (query, handler) {
-            if (!query)
-                return;
-            if (typeof query.addEventListener === 'function') {
-                query.addEventListener('change', handler);
-                cleanupCallbacks.push(function () { return query.removeEventListener('change', handler); });
-            }
-            else if (typeof query.addListener === 'function') {
-                query.addListener(handler);
-                cleanupCallbacks.push(function () { return query.removeListener(handler); });
-            }
-        };
-        // Setup reduced motion monitoring
-        var window = typeof globalThis !== 'undefined' ? globalThis.window : undefined;
-        var reduceMotionQuery = (window === null || window === void 0 ? void 0 : window.matchMedia) ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
-        setupMediaListener(reduceMotionQuery, function (event) {
-            if (event.matches && onRequestDowngrade) {
-                onRequestDowngrade('minimo');
-            }
-        });
-        // Setup connection monitoring
-        var navigator = typeof globalThis !== 'undefined' ? globalThis.navigator : undefined;
-        var connection = (navigator === null || navigator === void 0 ? void 0 : navigator.connection) || (navigator === null || navigator === void 0 ? void 0 : navigator.mozConnection) || (navigator === null || navigator === void 0 ? void 0 : navigator.webkitConnection);
-        var handleConnectionChange = function () {
-            if ((connection === null || connection === void 0 ? void 0 : connection.saveData) && onRequestDowngrade) {
-                var targetProfile = selectedProfileId === 'minimo' ? 'minimo' : 'bajo';
-                onRequestDowngrade(targetProfile);
-            }
-        };
-        if (connection) {
-            handleConnectionChange();
-            if (typeof connection.addEventListener === 'function') {
-                connection.addEventListener('change', handleConnectionChange);
-                cleanupCallbacks.push(function () { return connection.removeEventListener('change', handleConnectionChange); });
-            }
-        }
-        return {
-            dispose: function () {
-                cleanupCallbacks.forEach(function (fn) { return fn(); });
-                cleanupCallbacks.length = 0;
-            },
-            currentProfile: selectedProfileId
-        };
-    }
-    /**
-     * Utility to translate quality preset properties to composer configuration
-     */
-    function translatePresetToConfig(preset) {
-        return {
-            particleCount: preset.maxParticles,
-            jacobiIterations: preset.numJacobiSteps,
-            renderPasses: preset.numRenderSteps,
-            velocityScale: preset.velocityScaleFactor,
-            trailFadeRate: 1 / preset.trailLength,
-        };
-    }
-
-    var autoProfile = /*#__PURE__*/Object.freeze({
-        __proto__: null,
-        QUALITY_PRESETS: QUALITY_PRESETS,
-        QUALITY_PRESET_MAPPING: QUALITY_PRESET_MAPPING,
-        QUALITY_SEQUENCE: QUALITY_SEQUENCE,
-        createFluidBackground: createFluidBackground,
-        detectQualityProfile: detectQualityProfile,
-        getNextQualityId: getNextQualityId,
-        prefersReducedMotion: prefersReducedMotion,
-        translatePresetToConfig: translatePresetToConfig
-    });
 
     // These exports are only used for testing.
     /**

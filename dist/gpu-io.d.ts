@@ -158,6 +158,10 @@ declare const QUALITY_SEQUENCE: QualityPresetId[];
 interface AutoProfileOptions {
     /** Override automatic detection with specific profile */
     profileId?: QualityPresetId;
+    /** Target FPS for performance monitoring (default: 60) */
+    targetFPS?: number;
+    /** Enable debug logging for performance changes */
+    debugLogging?: boolean;
     /** Callback when performance downgrade is requested */
     onRequestDowngrade?: (targetProfileId: QualityPresetId) => void;
     /** Custom device capabilities for testing */
@@ -211,7 +215,7 @@ interface BrowserEnvironment {
 /**
  * Get the next lower quality preset ID in the sequence
  */
-declare function getNextQualityId(id: QualityPresetId): QualityPresetId | null;
+declare function getNextQualityId(id: QualityPresetId, direction?: 'up' | 'down'): QualityPresetId | null;
 /**
  * Check if user prefers reduced motion (SSR-safe)
  */
@@ -369,6 +373,14 @@ declare class GPUComposer {
      * Auto-performance profiling options for dynamic quality adjustment.
      */
     private _autoProfileOptions?;
+    /**
+     * Performance adapter for runtime quality adjustments.
+     */
+    private _performanceAdapter?;
+    /**
+     * Debug logging flag for performance events.
+     */
+    private _debugPerformance;
     /**
      * Create a GPUComposer from an existing THREE.WebGLRenderer that shares a single WebGL context.
      * @param renderer - Threejs WebGLRenderer.
@@ -766,6 +778,25 @@ declare class GPUComposer {
      * Use GPUComposer.tick() to increment this value on each animation cycle.
      */
     get numTicks(): number;
+    /**
+     * Set a quality preset for performance optimization.
+     * @param presetId - The quality preset ID ('alto', 'medio', 'bajo', 'minimo')
+     */
+    setQualityPreset(presetId: QualityPresetId): void;
+    /**
+     * Get the current quality preset.
+     * @returns The current quality preset or null if not set
+     */
+    getCurrentQualityPreset(): QualityPreset | null;
+    /**
+     * Reset performance configuration to original values.
+     */
+    resetPerformanceConfig(): void;
+    /**
+     * Enable or disable debug logging for performance events.
+     * @param enabled - Whether to enable debug logging
+     */
+    setPerformanceDebugLogging(enabled: boolean): void;
     /**
      * Deallocate GPUComposer instance and associated WebGL properties.
      */
