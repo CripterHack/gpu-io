@@ -91,6 +91,10 @@ export const QUALITY_SEQUENCE: QualityPresetId[] = ['alto', 'medio', 'bajo', 'mi
 export interface AutoProfileOptions {
   /** Override automatic detection with specific profile */
   profileId?: QualityPresetId;
+  /** Target FPS for performance monitoring (default: 60) */
+  targetFPS?: number;
+  /** Enable debug logging for performance changes */
+  debugLogging?: boolean;
   /** Callback when performance downgrade is requested */
   onRequestDowngrade?: (targetProfileId: QualityPresetId) => void;
   /** Custom device capabilities for testing */
@@ -141,12 +145,25 @@ export interface BrowserEnvironment {
 /**
  * Get the next lower quality preset ID in the sequence
  */
-export function getNextQualityId(id: QualityPresetId): QualityPresetId | null {
+export function getNextQualityId(id: QualityPresetId, direction: 'up' | 'down' = 'down'): QualityPresetId | null {
   const index = QUALITY_SEQUENCE.indexOf(id);
-  if (index === -1 || index >= QUALITY_SEQUENCE.length - 1) {
+  if (index === -1) {
     return null;
   }
-  return QUALITY_SEQUENCE[index + 1];
+  
+  if (direction === 'down') {
+    // Move to lower quality (higher index)
+    if (index >= QUALITY_SEQUENCE.length - 1) {
+      return null;
+    }
+    return QUALITY_SEQUENCE[index + 1];
+  } else {
+    // Move to higher quality (lower index)
+    if (index <= 0) {
+      return null;
+    }
+    return QUALITY_SEQUENCE[index - 1];
+  }
 }
 
 /**
