@@ -1,87 +1,96 @@
 # Auto-Performance Tuning Demo
 
-This example demonstrates **gpu-io's automatic performance tuning** capabilities. The simulation dynamically adjusts its quality settings based on your device's performance to maintain smooth framerates while maximizing visual quality.
+This example demonstrates GPU-IO's automatic performance tuning. The simulation adjusts quality based on device capabilities and real-time FPS to maintain smooth rendering while maximizing visual quality.
 
 ## Features
 
-- **Automatic Quality Detection**: Detects device capabilities and selects optimal quality preset
-- **Real-time Performance Monitoring**: Tracks FPS and adjusts quality dynamically
-- **Manual Override Controls**: Toggle between automatic and manual quality selection
-- **Four Quality Presets**: 
-  - `high` - Maximum quality with highest particle count
-  - `medium` - Balanced quality and performance  
-  - `low` - Reduced quality for better performance
-  - `minimal` - Minimal quality for maximum compatibility
-- **Performance Metrics Display**: Real-time FPS counter and quality information
-- **Interactive Fluid Simulation**: Touch/mouse interaction with fluid dynamics
+- Automatic quality detection and selection
+- Real-time FPS monitoring with dynamic quality adjustments
+- Manual override controls (preset switching and reset)
+- Four quality presets (high, medium, low, minimal)
+- Performance metrics display (FPS, current preset)
 
 ## Controls
 
-### UI Controls (Right Panel)
-- **Auto-Tuning**: Enable/disable automatic performance adjustment
-- **Manual Quality**: Select specific quality preset when auto-tuning is off
-- **Show FPS**: Toggle FPS and performance information display
-- **Show Quality Info**: Toggle detailed quality settings display
-
-### Keyboard Shortcuts
-- `1-4`: Switch to quality presets (high, medium, low, minimal)
-- `a`: Toggle auto-tuning on/off
-- `v`: Save screenshot
-
-### Mouse/Touch
-- **Move**: Interact with fluid simulation
-- **Click/Touch**: Apply force to fluid
+- Auto-Tuning: Enable/disable automatic performance adjustment
+- Manual Quality: Select a specific preset when auto-tuning is off
+- Show FPS / Quality Info: Toggle performance and preset information
+- Shortcuts: `1–4` select presets, `a` toggles auto-tuning, `v` saves a screenshot
 
 ## Quality Presets Comparison
 
-| Preset | Particle Density | Max Particles | Jacobi Steps | Render Steps | Target FPS |
-|--------|------------------|---------------|--------------|--------------|------------|
-| High   | 0.1              | 100,000       | 3            | 3            | 22+        |
-| Medium | 0.07             | 70,000        | 3            | 2            | 28+        |
-| Low    | 0.045            | 45,000        | 2            | 1            | 32+        |
-| Minimal| 0.03             | 25,000        | 1            | 1            | 36+        |
+| Preset  | Particle Density | Max Particles | Jacobi Steps | Render Steps | Frame Budget (ms) | Approx FPS |
+|--------|------------------|---------------|--------------|--------------|-------------------|------------|
+| High   | 0.1              | 100,000       | 3            | 3            | 22                | ~45        |
+| Medium | 0.07             | 70,000        | 3            | 2            | 28                | ~36        |
+| Low    | 0.045            | 45,000        | 2            | 1            | 32                | ~31        |
+| Minimal| 0.03             | 25,000        | 1            | 1            | 36                | ~28        |
 
 ## Auto-Tuning Behavior
 
-The auto-tuning system:
-
-1. **Monitors Performance**: Tracks average FPS over the last 60 frames
-2. **Downgrades Quality**: If FPS drops 5+ below target, switches to lower quality preset
-3. **Upgrades Quality**: If FPS is 10+ above target, switches to higher quality preset
-4. **Respects User Preferences**: Honors reduced-motion settings by default
-5. **Provides Callbacks**: Notifies application of quality changes for custom handling
+- Monitors performance using a low-pass filtered FPS via `GPUComposer.tick()`
+- Downgrades when FPS < 80% of target (e.g., <48 FPS for target 60)
+- Upgrades when FPS > 120% of target, checked less frequently (every ~120 ticks)
+- Respects user preferences; reduced motion selects the minimal preset
+- Callbacks: `onPerformanceUpdate` (per frame), `onCanvasResize` (resize), `onRequestDowngrade` (environment-triggered downgrade)
 
 ## Reduced-Motion Support
 
-For users with `prefers-reduced-motion` enabled:
-- Auto-tuning may be disabled by default
-- Can be manually enabled via controls
-- Set `respectReducedMotion: false` in configuration to override
+- Detects `prefers-reduced-motion` and selects `minimal` preset automatically
+- Override with `autoPerformanceProfile: { profileId: 'medium' }` if desired
 
-## Integration Example
+## Usage Examples
+
+### Basic Automatic Mode (Recommended)
 
 ```javascript
 const composer = new GPUComposer({
-  canvas,
-  autoPerformance: {
+  canvas: document.getElementById('webgl-canvas'),
+  autoPerformanceProfile: true
+});
+
+function animate() {
+  composer.tick();
+  requestAnimationFrame(animate);
+}
+animate();
+```
+
+Note: In TypeScript, prefer `autoPerformanceProfile: {}` or an options object instead of `true`.
+
+### Automatic with Debug Monitoring
+
+```javascript
+const composer = new GPUComposer({
+  canvas: document.getElementById('webgl-canvas'),
+  autoPerformanceProfile: {
     targetFPS: 60,
     debugLogging: true,
+    onPerformanceUpdate: (metrics) => {
+      document.getElementById('fps-counter')?.textContent = `${Math.round(metrics.fps)} FPS`;
+    },
     onRequestDowngrade: (targetProfileId) => {
-      // Handle quality change
-      updateSimulationQuality(targetProfileId);
+      showNotification(`Quality adjusted to ${targetProfileId}`);
     }
   }
 });
 ```
 
-## Technical Implementation
+### Manual Override and Runtime Controls
 
-This example showcases:
-- Dynamic particle system scaling
-- Adaptive simulation parameters
-- Real-time performance monitoring
-- Quality preset management
-- User preference detection
-- Smooth quality transitions
+```javascript
+const composer = new GPUComposer({
+  canvas: document.getElementById('webgl-canvas'),
+  autoPerformanceProfile: { profileId: 'medium' }
+});
 
-The auto-tuning system is designed to be non-intrusive and can be easily integrated into existing gpu-io applications with minimal code changes.
+document.getElementById('quality-high').onclick = () => {
+  composer.setQualityPreset('high');
+};
+
+document.getElementById('quality-auto').onclick = () => {
+  composer.resetPerformanceConfig();
+};
+```
+
+This auto-tuning system is non-intrusive and integrates into existing GPU-IO apps with minimal changes while providing robust defaults and flexible customization.
