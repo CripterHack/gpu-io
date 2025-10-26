@@ -85,6 +85,13 @@ GPULayer.calcGPULayerSize = (
 	name: string,
 	verboseLogging: boolean,
 ) => {
+	console.log('calcGPULayerSize called with:', {
+		size: JSON.stringify(size),
+		sizeType: typeof size,
+		isArray: Array.isArray(size),
+		name: name
+	});
+	
 	if (isNumber(size as number)) {
 		if (!isPositiveInteger(size)) {
 			throw new Error(`Invalid length: ${JSON.stringify(size)} for GPULayer "${name}", must be positive integer.`);
@@ -105,11 +112,15 @@ GPULayer.calcGPULayerSize = (
 		if (verboseLogging) console.log(`Using [${width}, ${height}] for 1D array of length ${size} in GPULayer "${name}".`);
 		return { width, height, length };
 	}
+	
+	console.log('Processing as 2D array, size:', size);
 	const width = (size as number[])[0];
+	console.log('Extracted width:', width, 'type:', typeof width);
 	if (!isPositiveInteger(width)) {
 		throw new Error(`Invalid width: ${JSON.stringify(width)} for GPULayer "${name}", must be positive integer.`);
 	}
 	const height = (size as number[])[1];
+	console.log('Extracted height:', height, 'type:', typeof height);
 	if (!isPositiveInteger(height)) {
 		throw new Error(`Invalid height: ${JSON.stringify(height)} for GPULayer "${name}", must be positive integer.`);
 	}

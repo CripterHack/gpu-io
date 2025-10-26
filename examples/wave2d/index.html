@@ -8,8 +8,15 @@
 		<script src="../common/tweakpane-3.1.1.min.js"></script>
 		<script src="../common/micromodal.min.js"></script>
 		<script src="../common/canvas-capture.min.js"></script>
-		<script src="../common/three.min.js"></script>
-		<script src="../common/OrbitControls.js"></script>
+		<script type="module">
+			import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
+			window.THREE = THREE;
+			
+			// Load OrbitControls after THREE is available
+			const script = document.createElement('script');
+			script.src = '../common/OrbitControls.js';
+			document.head.appendChild(script);
+		</script>
 		<script src="../../dist/gpu-io.min.js"></script>
 	</head>
 	<body>

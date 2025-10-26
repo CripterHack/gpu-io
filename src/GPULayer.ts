@@ -93,8 +93,9 @@ export class GPULayer {
 	private _bufferIndex = 0;
 	readonly numBuffers;
 	private readonly _buffers: WebGLTexture[] = [];
+	private _disposed = false;
 
-	// Texture sizes.
+	// Texture overrides for Three.js integration.
 	private _length?: number; // This is only used for 1D data layers, access with GPULayer.length.
 	private _width: number; // Access with GPULayer.width.
 	private _height: number; // Access with GPULayer.height.
@@ -310,6 +311,13 @@ export class GPULayer {
 		this.numComponents = numComponents;
 
 		// Set dimensions, may be 1D or 2D.
+		console.log('GPULayer constructor received dimensions:', JSON.stringify(dimensions), 'for layer:', name);
+		console.log('Type of dimensions:', typeof dimensions);
+		console.log('Array.isArray(dimensions):', Array.isArray(dimensions));
+		if (Array.isArray(dimensions)) {
+			console.log('dimensions[0]:', dimensions[0], 'type:', typeof dimensions[0]);
+			console.log('dimensions[1]:', dimensions[1], 'type:', typeof dimensions[1]);
+		}
 		const { length, width, height } = GPULayer.calcGPULayerSize(dimensions, name, composer.verboseLogging);
 		// We already type checked length, width, and height in calcGPULayerSize.
 		this._length = length;
@@ -617,19 +625,46 @@ export class GPULayer {
 	 * Get the state at a specified index as a GPULayerState object.
 	 */
 	getStateAtIndex(index: number): GPULayerState {
-		const { numBuffers, _textureOverrides, _buffers } = this;
+		// Check if layer has been disposed
+		if (this._disposed) {
+			throw new Error(`GPULayer "${this.name}" has been disposed and cannot be accessed.`);
+		}
+		
+		const { numBuffers, _textureOverrides } = this;
+		const _buffers = this._buffers;
+		
+		// Check if _buffers is properly initialized
+		if (!_buffers) {
+			throw new Error(`GPULayer "${this.name}" _buffers array is undefined. This indicates a critical initialization failure or the layer has been disposed.`);
+		}
+		
+		if (_buffers.length === 0) {
+			throw new Error(`GPULayer "${this.name}" _buffers array is empty. This may be due to WebGL context loss or initialization failure.`);
+		}
+		
+		// Additional check for buffer length consistency
+		if (_buffers.length !== numBuffers) {
+			throw new Error(`GPULayer "${this.name}" buffer length mismatch: expected ${numBuffers}, got ${_buffers.length}. This may indicate a WebGL context loss.`);
+		}
+		
 		if (index < 0 && index > -numBuffers) {
 			index += numBuffers; // Slightly negative numbers are ok.
 		}
 		if (index < 0 || index >= numBuffers) {
 			// We will allow this number to overflow with warning - likely user error.
-			console.warn(`Out of range buffer index: ${index} for GPULayer "${this.name}" with $.numBuffers} buffer${numBuffers > 1 ? 's' : ''}.  Was this intentional?`);
+			console.warn(`Out of range buffer index: ${index} for GPULayer "${this.name}" with ${numBuffers} buffer${numBuffers > 1 ? 's' : ''}.  Was this intentional?`);
 			if (index < 0) {
 				index += numBuffers * Math.ceil(Math.abs(index) / numBuffers);
 			} else {
 				index = index % numBuffers;
 			}
 		}
+		
+		// Final safety check before accessing the buffer
+		if (index >= _buffers.length || !_buffers[index]) {
+			throw new Error(`GPULayer "${this.name}" buffer at index ${index} is undefined or null. Buffer length: ${_buffers.length}, numBuffers: ${numBuffers}`);
+		}
+		
 		let texture = _buffers[index];
 		if (_textureOverrides && _textureOverrides[index]) texture = _textureOverrides[index]!;
 		return {
@@ -1097,6 +1132,9 @@ export class GPULayer {
 
 		if (!gl) throw new Error(`Must call dispose() on all GPULayers before calling dispose() on GPUComposer.`);
 	
+		// Mark as disposed first to prevent further access
+		this._disposed = true;
+		
 		this._destroyBuffers();
 		// @ts-ignore
 		delete this._buffers;
