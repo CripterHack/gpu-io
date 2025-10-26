@@ -834,6 +834,7 @@ declare class GPULayer {
     private _bufferIndex;
     readonly numBuffers: number;
     private readonly _buffers;
+    private _disposed;
     private _length?;
     private _width;
     private _height;

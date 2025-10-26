@@ -4333,6 +4333,7 @@
             // e.g [currentState, previousState]
             this._bufferIndex = 0;
             this._buffers = [];
+            this._disposed = false;
             // Check constructor parameters.
             var name = (params || {}).name;
             if (!composer) {
@@ -4361,6 +4362,13 @@
             }
             this.numComponents = numComponents;
             // Set dimensions, may be 1D or 2D.
+            console.log('GPULayer constructor received dimensions:', JSON.stringify(dimensions), 'for layer:', name);
+            console.log('Type of dimensions:', typeof dimensions);
+            console.log('Array.isArray(dimensions):', Array.isArray(dimensions));
+            if (Array.isArray(dimensions)) {
+                console.log('dimensions[0]:', dimensions[0], 'type:', typeof dimensions[0]);
+                console.log('dimensions[1]:', dimensions[1], 'type:', typeof dimensions[1]);
+            }
             var _a = GPULayer.calcGPULayerSize(dimensions, name, composer.verboseLogging), length = _a.length, width = _a.width, height = _a.height;
             // We already type checked length, width, and height in calcGPULayerSize.
             this._length = length;
@@ -4719,19 +4727,39 @@
          * Get the state at a specified index as a GPULayerState object.
          */
         GPULayer.prototype.getStateAtIndex = function (index) {
-            var _a = this, numBuffers = _a.numBuffers, _textureOverrides = _a._textureOverrides, _buffers = _a._buffers;
+            // Check if layer has been disposed
+            if (this._disposed) {
+                throw new Error("GPULayer \"".concat(this.name, "\" has been disposed and cannot be accessed."));
+            }
+            var _a = this, numBuffers = _a.numBuffers, _textureOverrides = _a._textureOverrides;
+            var _buffers = this._buffers;
+            // Check if _buffers is properly initialized
+            if (!_buffers) {
+                throw new Error("GPULayer \"".concat(this.name, "\" _buffers array is undefined. This indicates a critical initialization failure or the layer has been disposed."));
+            }
+            if (_buffers.length === 0) {
+                throw new Error("GPULayer \"".concat(this.name, "\" _buffers array is empty. This may be due to WebGL context loss or initialization failure."));
+            }
+            // Additional check for buffer length consistency
+            if (_buffers.length !== numBuffers) {
+                throw new Error("GPULayer \"".concat(this.name, "\" buffer length mismatch: expected ").concat(numBuffers, ", got ").concat(_buffers.length, ". This may indicate a WebGL context loss."));
+            }
             if (index < 0 && index > -numBuffers) {
                 index += numBuffers; // Slightly negative numbers are ok.
             }
             if (index < 0 || index >= numBuffers) {
                 // We will allow this number to overflow with warning - likely user error.
-                console.warn("Out of range buffer index: ".concat(index, " for GPULayer \"").concat(this.name, "\" with $.numBuffers} buffer").concat(numBuffers > 1 ? 's' : '', ".  Was this intentional?"));
+                console.warn("Out of range buffer index: ".concat(index, " for GPULayer \"").concat(this.name, "\" with ").concat(numBuffers, " buffer").concat(numBuffers > 1 ? 's' : '', ".  Was this intentional?"));
                 if (index < 0) {
                     index += numBuffers * Math.ceil(Math.abs(index) / numBuffers);
                 }
                 else {
                     index = index % numBuffers;
                 }
+            }
+            // Final safety check before accessing the buffer
+            if (index >= _buffers.length || !_buffers[index]) {
+                throw new Error("GPULayer \"".concat(this.name, "\" buffer at index ").concat(index, " is undefined or null. Buffer length: ").concat(_buffers.length, ", numBuffers: ").concat(numBuffers));
             }
             var texture = _buffers[index];
             if (_textureOverrides && _textureOverrides[index])
@@ -5175,6 +5203,8 @@
                 console.log("Deallocating GPULayer \"".concat(name, "\"."));
             if (!gl)
                 throw new Error("Must call dispose() on all GPULayers before calling dispose() on GPUComposer.");
+            // Mark as disposed first to prevent further access
+            this._disposed = true;
             this._destroyBuffers();
             // @ts-ignore
             delete this._buffers;
@@ -5284,6 +5314,12 @@
      * @private
      */
     GPULayer.calcGPULayerSize = function (size, name, verboseLogging) {
+        console.log('calcGPULayerSize called with:', {
+            size: JSON.stringify(size),
+            sizeType: typeof size,
+            isArray: Array.isArray(size),
+            name: name
+        });
         if (isNumber(size)) {
             if (!isPositiveInteger(size)) {
                 throw new Error("Invalid length: ".concat(JSON.stringify(size), " for GPULayer \"").concat(name, "\", must be positive integer."));
@@ -5305,11 +5341,14 @@
                 console.log("Using [".concat(width_1, ", ").concat(height_1, "] for 1D array of length ").concat(size, " in GPULayer \"").concat(name, "\"."));
             return { width: width_1, height: height_1, length: length_1 };
         }
+        console.log('Processing as 2D array, size:', size);
         var width = size[0];
+        console.log('Extracted width:', width, 'type:', typeof width);
         if (!isPositiveInteger(width)) {
             throw new Error("Invalid width: ".concat(JSON.stringify(width), " for GPULayer \"").concat(name, "\", must be positive integer."));
         }
         var height = size[1];
+        console.log('Extracted height:', height, 'type:', typeof height);
         if (!isPositiveInteger(height)) {
             throw new Error("Invalid height: ".concat(JSON.stringify(height), " for GPULayer \"").concat(name, "\", must be positive integer."));
         }
