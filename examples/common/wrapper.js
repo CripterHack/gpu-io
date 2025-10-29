@@ -159,8 +159,9 @@
 		title = `${webGLSettings.webGLVersion}`;
 		settings.title = title;
 
-		if (CanvasCapture) {
-			CanvasCapture.dispose();
+		// Initialize recording only when a valid canvas is available
+		if (CanvasCapture && canvas) {
+			try { CanvasCapture.dispose(); } catch (_) {}
 			CanvasCapture.init(canvas, { showRecDot: true, showDialogs: true, showAlerts: true, recDotCSS: { left: '0', right: 'auto' } });
 			CanvasCapture.bindKeyToVideoRecord('v', {
 				format: CanvasCapture.WEBM,
