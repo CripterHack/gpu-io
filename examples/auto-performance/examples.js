@@ -29,6 +29,11 @@ const EXAMPLES = {
         name: 'Julia Set Fractal',
         description: 'Interactive Julia set fractal renderer',
         main: fractalMain
+    },
+    'jfa-voronoi-sdf': {
+        name: 'JFA Voronoi + SDF',
+        description: 'Jump Flood Voronoi and SDF renderer',
+        main: jfaVoronoiSdfMain
     }
 };
 
