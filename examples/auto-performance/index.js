@@ -1,8 +1,4 @@
-// Main is called from ../common/wrapper.js
-function main({ pane, contextID, glslVersion}) {
-	// Initialize the first example (Fluid Simulation)
-	return switchExample('fluid', pane, contextID, glslVersion);
-}
+// (Main is defined at the end of this file.)
 
 // Performance manager for auto-tuning
 class PerformanceManager {
@@ -59,6 +55,14 @@ class PerformanceManager {
 		this.consecutiveAdjustments = 0;
 	}
 }
+
+// Global quality presets shared across examples
+const QUALITY_PRESETS = {
+    high: { particleDensity: 1.0, maxParticles: 10000, numJacobiSteps: 40, numRenderSteps: 3, velocityScaleFactor: 1 },
+    medium: { particleDensity: 0.7, maxParticles: 7000, numJacobiSteps: 25, numRenderSteps: 2, velocityScaleFactor: 1 },
+    low: { particleDensity: 0.5, maxParticles: 5000, numJacobiSteps: 15, numRenderSteps: 1, velocityScaleFactor: 2 },
+    minimal: { particleDensity: 0.3, maxParticles: 3000, numJacobiSteps: 10, numRenderSteps: 1, velocityScaleFactor: 2 }
+};
 
 // Fluid simulation implementation
 function fluidSimulation({ pane, contextID, glslVersion}) {
@@ -138,14 +142,7 @@ function fluidSimulation({ pane, contextID, glslVersion}) {
 	// Performance manager
 	const performanceManager = new PerformanceManager();
 
-	// Quality presets
-	const QUALITY_PRESETS = {
-		high: { particleDensity: 1.0, maxParticles: 10000, numJacobiSteps: 40, numRenderSteps: 3, velocityScaleFactor: 1 },
-		medium: { particleDensity: 0.7, maxParticles: 7000, numJacobiSteps: 25, numRenderSteps: 2, velocityScaleFactor: 1 },
-		low: { particleDensity: 0.5, maxParticles: 5000, numJacobiSteps: 15, numRenderSteps: 1, velocityScaleFactor: 2 },
-		minimal: { particleDensity: 0.3, maxParticles: 3000, numJacobiSteps: 10, numRenderSteps: 1, velocityScaleFactor: 2 }
-	};
-	
+	// Quality presets are defined globally; use them here
 	const QUALITY_SEQUENCE = ['minimal', 'low', 'medium', 'high'];
 	let currentQuality = 'high';
 	let currentPreset = QUALITY_PRESETS[currentQuality];
@@ -172,16 +169,20 @@ function fluidSimulation({ pane, contextID, glslVersion}) {
 	const height = canvas.clientHeight || canvas.height || window.innerHeight || 1080;
 	
 	
-	// Ensure we have valid dimensions
+	// Ensure we have valid dimensions; fall back to sane defaults
 	if (!width || !height || width <= 0 || height <= 0) {
-		throw new Error(`Invalid canvas dimensions: width=${width}, height=${height}`);
+		console.warn(`Invalid canvas dimensions detected (width=${width}, height=${height}). Falling back to 1920x1080.`);
 	}
+	const safeWidth = (!width || width <= 0) ? 1920 : width;
+	const safeHeight = (!height || height <= 0) ? 1080 : height;
 	
-	const velocityDimensions = [Math.ceil(width / VELOCITY_SCALE_FACTOR), Math.ceil(height / VELOCITY_SCALE_FACTOR)];
+	const velocityDimensions = [Math.ceil(safeWidth / VELOCITY_SCALE_FACTOR), Math.ceil(safeHeight / VELOCITY_SCALE_FACTOR)];
 	
-	// Ensure velocity dimensions are valid
+	// Ensure velocity dimensions are valid; clamp to minimum of 1
 	if (!velocityDimensions[0] || !velocityDimensions[1] || velocityDimensions[0] <= 0 || velocityDimensions[1] <= 0) {
-		throw new Error(`Invalid velocity dimensions: ${JSON.stringify(velocityDimensions)} from width=${width}, height=${height}`);
+		console.warn(`Invalid velocity dimensions detected: ${JSON.stringify(velocityDimensions)} from width=${safeWidth}, height=${safeHeight}. Clamping to [1,1].`);
+		velocityDimensions[0] = 1;
+		velocityDimensions[1] = 1;
 	}
 	
 	// Additional safety check - ensure dimensions are numbers
@@ -192,7 +193,7 @@ function fluidSimulation({ pane, contextID, glslVersion}) {
 	
 	const velocityState = new GPULayer(composer, {
 		name: 'velocity',
-		dimensions: [100, 100], // Hard-coded dimensions for testing
+		dimensions: safeDimensions,
 		type: FLOAT,
 		filter: LINEAR,
 		numComponents: 2,
@@ -280,7 +281,7 @@ function fluidSimulation({ pane, contextID, glslVersion}) {
 			},
 			{
 				name: 'u_dimensions',
-				value: [canvas.width, canvas.height],
+				value: [velocityState.width, velocityState.height],
 				type: FLOAT,
 			},
 		],
@@ -520,7 +521,7 @@ function fluidSimulation({ pane, contextID, glslVersion}) {
 			{
 				name: 'u_dimensions',
 				value: [canvas.width, canvas.height],
-				type: 'FLOAT',
+				type: FLOAT,
 			},
 		],
 	});
@@ -546,7 +547,7 @@ function fluidSimulation({ pane, contextID, glslVersion}) {
 			{
 				name: 'u_increment',
 				value: -1 / PARAMS.trailLength,
-				type: 'FLOAT',
+				type: FLOAT,
 			},
 		],
 	});
@@ -886,8 +887,8 @@ function fluidSimulation({ pane, contextID, glslVersion}) {
 
 // Global main function for wrapper.js
 function main({ pane, contextID, glslVersion }) {
-	// Initialize with fluid simulation by default
-	const result = switchExample('fluid', pane, contextID, glslVersion);
+	// Initialize with JFA Voronoi + SDF by default
+	const result = switchExample('jfa-voronoi-sdf', pane, contextID, glslVersion);
 	
 	// Set up example selector after initialization
 	setTimeout(() => {
